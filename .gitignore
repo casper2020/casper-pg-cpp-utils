@@ -1,0 +1,11 @@
+### C++ ###
+*.o
+*.so
+
+## macOS ##
+*xcuserdata*
+*project.xcworkspace*
+
+## patched and / or generated files ##
+src/pg/cpp/utils/versioning.h
+pg-cpp-utils.control
