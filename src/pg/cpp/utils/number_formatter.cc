@@ -34,10 +34,10 @@ pg::cpp::utils::NumberFormatter::NumberFormatter (const std::string& a_locale)
 {
     icu_number_format_.setRoundingMode(U_ICU_NAMESPACE::DecimalFormat::kRoundUp); // Unnecessary);
 
-    DecimalFormatSymbols symbols(icu_locale_, icu_error_code_);
+    U_ICU_NAMESPACE::DecimalFormatSymbols symbols(icu_locale_, icu_error_code_);
     if ( U_ZERO_ERROR == icu_error_code_ || U_USING_FALLBACK_WARNING == icu_error_code_ || U_USING_DEFAULT_WARNING == icu_error_code_ ) {
         if ( a_locale == "pt_PT" || a_locale == "pt-PT" ) {
-            symbols.setSymbol(DecimalFormatSymbols::kGroupingSeparatorSymbol, ".", true);
+	  symbols.setSymbol(U_ICU_NAMESPACE::DecimalFormatSymbols::kGroupingSeparatorSymbol, ".", true);
         }
         icu_number_format_.setDecimalFormatSymbols(symbols);
         icu_error_code_ = U_ZERO_ERROR;
