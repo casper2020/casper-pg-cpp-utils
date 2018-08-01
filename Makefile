@@ -53,7 +53,7 @@ SRC := src/pg-cpp-utils.cc                   \
 	   src/pg/cpp/utils/message_formatter.cc
 
 JSONCPP_SRC := src/jsoncpp/jsoncpp.cpp
-OSAL_SRC    := ../osal/src/osal/posix/posix_time.cc
+OSAL_SRC    := ../casper-osal/src/osal/posix/posix_time.cc
 
 OBJS := $(SRC:.cc=.o) $(JSONCPP_SRC:.cpp=.o) $(OSAL_SRC:.cc=.o)
 
@@ -67,7 +67,7 @@ ifeq (Darwin, $(PLATFORM))
 else
   OTHER_CFLAGS += -I /usr/include/openssl -I /usr/include/x86_64-linux-gnu/unicode
 endif
-  OTHER_CFLAGS += -I ../osal/src -I ../cppcodec
+  OTHER_CFLAGS += -I ../casper-osal/src -I ../cppcodec
 
 ####################
 # Set target type
