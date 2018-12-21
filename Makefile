@@ -34,8 +34,8 @@ ifeq (Darwin, $(PLATFORM))
 else
 	YACC := $(shell which bison)
 endif
-PG_CONFIG 					           := $(shell which pg_config)
-POSTGRESQL_HEADERS_DIR 		     := $(shell $(PG_CONFIG) --includedir-server)
+PG_CONFIG                      ?= $(shell which pg_config)
+POSTGRESQL_HEADERS_DIR 	       := $(shell $(PG_CONFIG) --includedir-server)
 POSTGRESQL_HEADERS_OTHER_C_DIR := $(shell $(PG_CONFIG) --pkgincludedir)
 
 #####################
