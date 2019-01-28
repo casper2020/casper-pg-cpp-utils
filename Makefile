@@ -129,12 +129,13 @@ endif
 LINKER_FLAGS =
 ifeq (Darwin, $(PLATFORM))
   SO_NAME := $(LIB_NAME).dylib.$(LIB_VERSION)
-  LINKER_FLAGS += -L/usr/local/opt/openssl/lib -L/usr/local/opt/icu4c/lib
+  LINKER_FLAGS += -L/usr/local/opt/openssl/lib
+	LINKER_FLAGS += /usr/local/opt/openssl/lib/libcrypto.a /usr/local/opt/openssl/lib/libssl.a /usr/local/opt/icu4c/lib/libicudata.a /usr/local/opt/icu4c/lib/libicuio.a /usr/local/opt/icu4c/lib/libicutu.a /usr/local/opt/icu4c/lib/libicuuc.a /usr/local/opt/icu4c/lib/libicui18n.a
 else
   SO_NAME := $(LIB_NAME).so.$(LIB_VERSION)
   LINKER_FLAGS += -Wl,-soname,$(SO_NAME) -Wl,-z,relro -Bsymbolic
+	LINKER_FLAGS += -lcrypto -lssl -licudata -licuio -licutu -licuuc -licui18n
 endif
-LINKER_FLAGS += -lcrypto -lssl -licudata -licuio -licutu -licuuc -licui18n
 $(shell sed -e s#@VERSION@#${LIB_VERSION}#g pg-cpp-utils.control.tpl > pg-cpp-utils.control)
 $(shell sed -e s#x\.x\.xx#${LIB_VERSION}#g src/pg/cpp/utils/versioning.h.tpl > src/pg/cpp/utils/versioning.h)
 
