@@ -26,8 +26,8 @@
   #pragma clang diagnostic ignored "-Wdeprecated-register"
 #endif
 extern "C" {
-    #include <postgres.h>
-    #include <catalog/pg_type.h>
+    #include "server/postgres.h"
+    #include "catalog/pg_type.h"
     #include <utils/array.h>
     #include "executor/spi.h"
     #include "lib/stringinfo.h"

@@ -67,7 +67,10 @@ ifeq (Darwin, $(PLATFORM))
 else
   OTHER_CFLAGS += -I /usr/include/openssl -I /usr/include/x86_64-linux-gnu/unicode
 endif
-  OTHER_CFLAGS += -I ../casper-osal/src -I ../cppcodec
+OTHER_CFLAGS += -I ../casper-osal/src -I ../cppcodec
+
+PG_CPPFLAGS := $(OTHER_CFLAGS)
+PG_CXXFLAGS := $(OTHER_CFLAGS)
 
 ####################
 # Set target type
@@ -109,10 +112,13 @@ endif
 ######################
 CXX      = g++
 CXXFLAGS = -std=c++11 $(OTHER_CFLAGS) -c -Wall -fPIC
+PG_CXXFLAGS = -std=c++11 $(OTHER_CFLAGS) -c -Wall -fPIC
 ifeq ($(TARGET_LC),release)
   CXXFLAGS += -g -O2 -DNDEBUG
+  PG_CXXFLAGS += -g -O2 -DNDEBUG
 else
   CXXFLAGS += -g -O0 -DDEBUG
+  PG_CXXFLAGS += -g -O0 -DDEBUG
 endif
 ifeq (Darwin, $(PLATFORM))
   CLANG_CXX_LANGUAGE_STANDARD = c++11
@@ -147,7 +153,6 @@ EXTVERSION  := $(LIB_VERSION)
 SHLIB_LINK  := -lstdc++ $(LINKER_FLAGS)
 MODULE_big  := $(LIB_NAME)
 EXTRA_CLEAN :=
-PG_CPPFLAGS := $(CFLAGS) $(CXXFLAGS) $(OTHER_CFLAGS)
 PGXS        := $(shell $(PG_CONFIG) --pgxs)
 
 include $(PGXS)
@@ -164,7 +169,7 @@ shared_object: $(OBJS)
 .cc.o:
 	@echo "$(OTHER_CFLAGS)"
 	@echo "* cc  [$(TARGET)] $< ..."
-	@$(CXX) $(CXXFLAGS) $< -o $@
+	$(CXX) $(CXXFLAGS) $< -o $@
 
 # c++
 .cpp.o:
