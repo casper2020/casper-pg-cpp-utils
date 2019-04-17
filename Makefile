@@ -36,7 +36,6 @@ else
 endif
 PG_CONFIG                      ?= $(shell which pg_config)
 POSTGRESQL_HEADERS_DIR 	       := $(shell $(PG_CONFIG) --includedir-server)
-#POSTGRESQL_HEADERS_OTHER_C_DIR := $(shell $(PG_CONFIG) --pkgincludedir)
 POSTGRESQL_HEADERS_OTHER_C_DIR := $(POSTGRESQL_HEADERS_DIR:server=)
 
 #####################
@@ -58,20 +57,20 @@ OSAL_SRC    := ../casper-osal/src/osal/posix/posix_time.cc
 
 OBJS := $(SRC:.cc=.o) $(JSONCPP_SRC:.cpp=.o) $(OSAL_SRC:.cc=.o)
 
-OTHER_CFLAGS := \
+FPG_HEADERS_SEARCH_PATH := \
 	-I $(POSTGRESQL_HEADERS_DIR) 	     \
 	-I $(POSTGRESQL_HEADERS_OTHER_C_DIR) \
 	-I src
 
 ifeq (Darwin, $(PLATFORM))
-  OTHER_CFLAGS += -I /usr/local/opt/openssl/include -I /usr/local/opt/icu4c/include
+  FPG_HEADERS_SEARCH_PATH += -I /usr/local/opt/openssl/include -I /usr/local/opt/icu4c/include
 else
-  OTHER_CFLAGS += -I /usr/include/openssl -I /usr/include/x86_64-linux-gnu/unicode
+  FPG_HEADERS_SEARCH_PATH += -I /usr/include/openssl -I /usr/include/x86_64-linux-gnu/unicode
 endif
-OTHER_CFLAGS += -I ../casper-osal/src -I ../cppcodec
+FPG_HEADERS_SEARCH_PATH += -I ../casper-osal/src -I ../cppcodec
 
-PG_CPPFLAGS := $(OTHER_CFLAGS)
-PG_CXXFLAGS := $(OTHER_CFLAGS)
+PG_CPPFLAGS := $(FPG_HEADERS_SEARCH_PATH)
+PG_CXXFLAGS := $(FPG_HEADERS_SEARCH_PATH)
 
 ####################
 # Set target type
@@ -112,8 +111,8 @@ endif
 # Set compiler flags
 ######################
 CXX      = g++
-CXXFLAGS = -std=c++11 $(OTHER_CFLAGS) -c -Wall -fPIC
-PG_CXXFLAGS = -std=c++11 $(OTHER_CFLAGS) -c -Wall -fPIC
+CXXFLAGS = -std=c++11 $(FPG_HEADERS_SEARCH_PATH) -c -Wall -fPIC
+PG_CXXFLAGS = -std=c++11 $(FPG_HEADERS_SEARCH_PATH) -c -Wall -fPIC
 ifeq ($(TARGET_LC),release)
   CXXFLAGS += -g -O2 -DNDEBUG
   PG_CXXFLAGS += -g -O2 -DNDEBUG
@@ -168,18 +167,19 @@ shared_object: $(OBJS)
 	otool -L $(LIB_NAME)
 
 # PostgreSQL bit code
-%.bc : %.cc
-	@$(COMPILE.cxx.bc) $(CCFLAGS) $(CPPFLAGS) -fPIC -c -o $@ $<
+%.bc:%.cc
+	@echo "* bc  [$(TARGET)] $< ..."
+	@$(COMPILE.cxx.bc) $(FPG_HEADERS_SEARCH_PATH) $(CCFLAGS) $(CPPFLAGS) -fPIC -c -o $@ $<
 
 # c++
 .cc.o:
-	@echo "$(OTHER_CFLAGS)"
+	@echo "$(FPG_HEADERS_SEARCH_PATH)"
 	@echo "* cc  [$(TARGET)] $< ..."
 	$(CXX) $(CXXFLAGS) $< -o $@
 
 # c++
 .cpp.o:
-	@echo "$(OTHER_CFLAGS)"
+	@echo "$(FPG_HEADERS_SEARCH_PATH)"
 	@echo "* cpp [$(TARGET)] $< ..."
 	@$(CXX) $(CXXFLAGS) $< -o $@
 
