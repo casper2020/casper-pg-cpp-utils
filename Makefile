@@ -36,7 +36,8 @@ else
 endif
 PG_CONFIG                      ?= $(shell which pg_config)
 POSTGRESQL_HEADERS_DIR 	       := $(shell $(PG_CONFIG) --includedir-server)
-POSTGRESQL_HEADERS_OTHER_C_DIR := $(shell $(PG_CONFIG) --pkgincludedir)
+#POSTGRESQL_HEADERS_OTHER_C_DIR := $(shell $(PG_CONFIG) --pkgincludedir)
+POSTGRESQL_HEADERS_OTHER_C_DIR := $(POSTGRESQL_HEADERS_DIR:server=)
 
 #####################
 # SOURCE & INCLUDES
@@ -58,9 +59,9 @@ OSAL_SRC    := ../casper-osal/src/osal/posix/posix_time.cc
 OBJS := $(SRC:.cc=.o) $(JSONCPP_SRC:.cpp=.o) $(OSAL_SRC:.cc=.o)
 
 OTHER_CFLAGS := \
-				-I src  		   		  			\
-				-I $(POSTGRESQL_HEADERS_DIR) 		\
-				-I $(POSTGRESQL_HEADERS_OTHER_C_DIR)
+	-I $(POSTGRESQL_HEADERS_DIR) 	     \
+	-I $(POSTGRESQL_HEADERS_OTHER_C_DIR) \
+	-I src
 
 ifeq (Darwin, $(PLATFORM))
   OTHER_CFLAGS += -I /usr/local/opt/openssl/include -I /usr/local/opt/icu4c/include
@@ -165,6 +166,11 @@ include $(PGXS)
 shared_object: $(OBJS)
 	@echo "* $(LIB_NAME) ~> done"
 	otool -L $(LIB_NAME)
+
+# PostgreSQL bit code
+%.bc : %.cc
+	@$(COMPILE.cxx.bc) $(CCFLAGS) $(CPPFLAGS) -fPIC -c -o $@ $<
+
 # c++
 .cc.o:
 	@echo "$(OTHER_CFLAGS)"
