@@ -146,9 +146,6 @@ extern "C" {
 
             utility = a_dealloc_utility_func(utility);
 
-            // ... close any open transaction(s) ...
-            SPI_finish();
-
             // ... restore context ...
             MemoryContextSwitchTo(old_context);
         }
