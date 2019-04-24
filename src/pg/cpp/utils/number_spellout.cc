@@ -42,7 +42,10 @@ pg::cpp::utils::NumberSpellout::NumberSpellout (const std::string& a_locale, con
     if ( 0 == a_spellout_override.length() ) {
         icu_number_format_ = new U_ICU_NAMESPACE::RuleBasedNumberFormat(U_ICU_NAMESPACE::URBNFRuleSetTag::URBNF_SPELLOUT, icu_locale_, icu_error_code_);
     } else {
-        icu_number_format_ = new U_ICU_NAMESPACE::RuleBasedNumberFormat(a_spellout_override.c_str(), icu_parse_error_, icu_error_code_);
+        icu_number_format_ = new U_ICU_NAMESPACE::RuleBasedNumberFormat(a_spellout_override.c_str(), icu_locale_, icu_parse_error_, icu_error_code_);
+    }
+    if ( not ( U_ZERO_ERROR == icu_error_code_ || U_USING_DEFAULT_WARNING == icu_error_code_ ) ) {
+      error_ = "ICU version:" + std::string(U_ICU_VERSION) + " - an error occurred while initializing RuleBasedNumberFormat: " + std::to_string(icu_error_code_);
     }
 }
 
@@ -76,13 +79,15 @@ void pg::cpp::utils::NumberSpellout::FillOutputAtUserFuncContext (FuncCallContex
 void pg::cpp::utils::NumberSpellout::Spellout (double a_number)
 {
     string_ = "";
-    error_  = "";
+    if ( not ( U_ZERO_ERROR == icu_error_code_ || U_USING_DEFAULT_WARNING == icu_error_code_ ) ) {
+	return;
+    }
     if ( U_ZERO_ERROR == icu_error_code_ || U_USING_DEFAULT_WARNING == icu_error_code_ ) {
         U_ICU_NAMESPACE::UnicodeString unicode_string;
         icu_number_format_->format(a_number, unicode_string);
         unicode_string.toUTF8String(string_);
     } else {
-        error_ = std::to_string(icu_error_code_);
+        error_ = "ICU version:" + std::string(U_ICU_VERSION) + " - an error occurred while calling icu number format function:" + std::to_string(icu_error_code_);
     }
 }
 
@@ -98,8 +103,14 @@ void pg::cpp::utils::NumberSpellout::CurrencySpellout (double a_major, const std
                                             const std::string& a_format)
 {
     Spellout(a_major);
+    if ( not ( U_ZERO_ERROR == icu_error_code_ || U_USING_DEFAULT_WARNING == icu_error_code_ ) ) {
+      return;
+    }
     const std::string major_str = string_;
     Spellout(a_minor);
+    if ( not ( U_ZERO_ERROR == icu_error_code_ || U_USING_DEFAULT_WARNING == icu_error_code_ ) ) {
+      return;
+    }
     const std::string minor_str = string_;
 
     const U_ICU_NAMESPACE::Formattable arguments[] = {
@@ -115,6 +126,6 @@ void pg::cpp::utils::NumberSpellout::CurrencySpellout (double a_major, const std
     if ( U_ZERO_ERROR == icu_error_code_ || U_USING_DEFAULT_WARNING == icu_error_code_ ) {
         unicode_string.toUTF8String(string_);
     } else {
-        error_ = std::to_string(icu_error_code_);
+      error_ = "ICU version:" + std::string(U_ICU_VERSION) + " - an error occurred while calling icu message format: " + std::to_string(icu_error_code_);
     }
 }
