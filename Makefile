@@ -66,7 +66,7 @@ ifeq (Darwin, $(PLATFORM))
   FPG_HEADERS_SEARCH_PATH += -I /usr/local/opt/openssl/include -I /usr/local/opt/icu4c/include
 else
   FPG_HEADERS_SEARCH_PATH += -I /usr/include/openssl
-  FPG_HEADERS_SEARCH_PATH += -I ../libicu-dev_57.1-6+deb9u2_amd64/usr/include/unicode
+  FPG_HEADERS_SEARCH_PATH += -I ../libicu-dev_52.1-8+deb8u7_amd64/usr/include/unicode
 endif
 FPG_HEADERS_SEARCH_PATH += -I ../casper-osal/src -I ../cppcodec
 
@@ -142,11 +142,11 @@ else
   SO_NAME := $(LIB_NAME).so.$(LIB_VERSION)
   LINKER_FLAGS += -Wl,-soname,$(SO_NAME) -Wl,-z,relro -Bsymbolic
   LINKER_FLAGS += -lcrypto -lssl
-  LINKER_FLAGS += ../libicu-dev_57.1-6+deb9u2_amd64/usr/lib/x86_64-linux-gnu/libicudata.a
-  LINKER_FLAGS += ../libicu-dev_57.1-6+deb9u2_amd64/usr/lib/x86_64-linux-gnu/libicuio.a
-  LINKER_FLAGS += ../libicu-dev_57.1-6+deb9u2_amd64/usr/lib/x86_64-linux-gnu/libicutu.a
-  LINKER_FLAGS += ../libicu-dev_57.1-6+deb9u2_amd64/usr/lib/x86_64-linux-gnu/libicuuc.a
-  LINKER_FLAGS += ../libicu-dev_57.1-6+deb9u2_amd64/usr/lib/x86_64-linux-gnu/libicui18n.a
+  LINKER_FLAGS += ../libicu-dev_52.1-8+deb8u7_amd64/usr/lib/x86_64-linux-gnu/libicudata.a
+  LINKER_FLAGS += ../libicu-dev_52.1-8+deb8u7_amd64/usr/lib/x86_64-linux-gnu/libicuio.a
+  LINKER_FLAGS += ../libicu-dev_52.1-8+deb8u7_amd64/usr/lib/x86_64-linux-gnu/libicutu.a
+  LINKER_FLAGS += ../libicu-dev_52.1-8+deb8u7_amd64/usr/lib/x86_64-linux-gnu/libicuuc.a
+  LINKER_FLAGS += ../libicu-dev_52.1-8+deb8u7_amd64/usr/lib/x86_64-linux-gnu/libicui18n.a
 endif
 $(shell sed -e s#@VERSION@#${LIB_VERSION}#g pg-cpp-utils.control.tpl > pg-cpp-utils.control)
 $(shell sed -e s#x\.x\.xx#${LIB_VERSION}#g src/pg/cpp/utils/versioning.h.tpl > src/pg/cpp/utils/versioning.h)
