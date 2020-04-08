@@ -72,7 +72,12 @@ void pg::cpp::utils::InvoiceHash::FillOutputAtUserFuncContext (FuncCallContext* 
 void pg::cpp::utils::InvoiceHash::Calculate (const std::string& a_payload)
 {
     bool           ctx_initialized  = false;
-    EVP_MD_CTX     ctx;
+#if OPENSSL_VERSION_NUMBER < 0x1010000fL
+    EVP_MD_CTX    _ctx;
+    EVP_MD_CTX*    ctx = &_ctx;
+#else
+    EVP_MD_CTX*    ctx = nullptr;
+#endif
     EVP_PKEY*      pkey             = nullptr;
     RSA*           rsa_pkey         = nullptr;
     FILE*          private_key_file = nullptr;
@@ -80,7 +85,7 @@ void pg::cpp::utils::InvoiceHash::Calculate (const std::string& a_payload)
     unsigned int   signature_len    = 0;
     pg::cpp::utils::B64       b64;
 
-    const auto cleanup = [&pkey, &private_key_file, &signature_bytes, &ctx_initialized, &ctx] () {
+    const auto cleanup = [&pkey, &private_key_file, &signature_bytes, &ctx_initialized, ctx] () {
 
         if ( nullptr != signature_bytes ) {
             delete [] signature_bytes;
@@ -95,7 +100,11 @@ void pg::cpp::utils::InvoiceHash::Calculate (const std::string& a_payload)
         }
 
         if ( true == ctx_initialized ) {
-            EVP_MD_CTX_cleanup(&ctx);
+#if OPENSSL_VERSION_NUMBER < 0x1010000fL
+            EVP_MD_CTX_cleanup(ctx);
+#else
+            EVP_MD_CTX_free(ctx);
+#endif
             ctx_initialized = false;
         }
 
@@ -124,19 +133,23 @@ void pg::cpp::utils::InvoiceHash::Calculate (const std::string& a_payload)
             throw PG_CPP_UTILS_EXCEPTION_NA("Error while assigning RSA!");
         }
 
-        EVP_MD_CTX_init(&ctx);
+#if OPENSSL_VERSION_NUMBER < 0x1010000fL
+        EVP_MD_CTX_init(ctx);
+#else
+        ctx = EVP_MD_CTX_new();
+#endif
         ctx_initialized = true;
 
-        if ( ! EVP_SignInit(&ctx, EVP_sha1()) ) {
+        if ( ! EVP_SignInit(ctx, EVP_sha1()) ) {
             throw PG_CPP_UTILS_EXCEPTION_NA("Error while setting up signing context!");
         }
 
-        if ( ! EVP_SignUpdate(&ctx, a_payload.c_str(), a_payload.length() ) ) {
+        if ( ! EVP_SignUpdate(ctx, a_payload.c_str(), a_payload.length() ) ) {
             throw PG_CPP_UTILS_EXCEPTION_NA("Error while updating signing context");
         }
 
         signature_bytes = new unsigned char[EVP_PKEY_size(pkey)];
-        if ( !EVP_SignFinal(&ctx, signature_bytes, &signature_len, pkey) ) {
+        if ( !EVP_SignFinal(ctx, signature_bytes, &signature_len, pkey) ) {
             throw PG_CPP_UTILS_EXCEPTION_NA("Error while finalizing signing context!");
         }
 

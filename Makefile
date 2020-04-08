@@ -38,6 +38,22 @@ PG_CONFIG                      ?= $(shell which pg_config)
 POSTGRESQL_HEADERS_DIR 	       := $(shell $(PG_CONFIG) --includedir-server)
 POSTGRESQL_HEADERS_OTHER_C_DIR := $(POSTGRESQL_HEADERS_DIR:server=)
 
+ifeq (Darwin, $(PLATFORM))
+  ICU_INCLUDE_DIR?=/usr/local/opt/icu4c/include
+  ICU_LIB_DIR?=/usr/local/opt/icu4c/lib
+  OPENSSL_INCLUDE_DIR?=/usr/local/opt/openssl/include
+  OPENSSL_LIB_DIR?=/usr/local/opt/openssl/lib
+  FORCE_STATIC_LIB_PREFERENCE:=-Wl,-force_load # -Wl, -Bstatic
+  ALLOW_DYNAMIC_LIB_PREFERENCE:=-Wl,-noall_load # -Wl, -Bdynamic
+else
+  ICU_INCLUDE_DIR?=../libicu-dev_52.1-8+deb8u7_amd64/usr/include/unicode
+  ICU_LIB_DIR?=../libicu-dev_52.1-8+deb8u7_amd64/usr/lib/x86_64-linux-gnu
+  OPENSSL_INCLUDE_DIR?=/usr/include
+  OPENSSL_LIB_DIR?=/usr/lib/x86_64-linux-gnu/
+  FORCE_STATIC_LIB_PREFERENCE:=-Wl,-Bstatic
+  ALLOW_DYNAMIC_LIB_PREFERENCE:=-Wl,-Bdynamic
+endif
+
 #####################
 # SOURCE & INCLUDES
 #####################
@@ -62,12 +78,7 @@ FPG_HEADERS_SEARCH_PATH := \
 	-I $(POSTGRESQL_HEADERS_OTHER_C_DIR) \
 	-I src
 
-ifeq (Darwin, $(PLATFORM))
-  FPG_HEADERS_SEARCH_PATH += -I /usr/local/opt/openssl/include -I /usr/local/opt/icu4c/include
-else
-  FPG_HEADERS_SEARCH_PATH += -I /usr/include/openssl
-  FPG_HEADERS_SEARCH_PATH += -I ../libicu-dev_52.1-8+deb8u7_amd64/usr/include/unicode
-endif
+FPG_HEADERS_SEARCH_PATH += -I $(OPENSSL_INCLUDE_DIR) -I $(ICU_INCLUDE_DIR)
 FPG_HEADERS_SEARCH_PATH += -I ../casper-osal/src -I ../cppcodec
 
 PG_CPPFLAGS := $(FPG_HEADERS_SEARCH_PATH)
@@ -129,25 +140,60 @@ endif
 ############################
 # Set lib name and version
 ############################
-LIB_NAME    := pg-cpp-utils
+LIB_NAME := pg-cpp-utils
 ifndef LIB_VERSION
 	LIB_VERSION := "0.0.00"
 endif
 LINKER_FLAGS =
 ifeq (Darwin, $(PLATFORM))
   SO_NAME := $(LIB_NAME).dylib.$(LIB_VERSION)
-  LINKER_FLAGS += -L/usr/local/opt/openssl/lib
-  LINKER_FLAGS += /usr/local/opt/openssl/lib/libcrypto.a /usr/local/opt/openssl/lib/libssl.a /usr/local/opt/icu4c/lib/libicudata.a /usr/local/opt/icu4c/lib/libicuio.a /usr/local/opt/icu4c/lib/libicutu.a /usr/local/opt/icu4c/lib/libicuuc.a /usr/local/opt/icu4c/lib/libicui18n.a
 else
   SO_NAME := $(LIB_NAME).so.$(LIB_VERSION)
   LINKER_FLAGS += -Wl,-soname,$(SO_NAME) -Wl,-z,relro -Bsymbolic
-  LINKER_FLAGS += -lcrypto -lssl
-  LINKER_FLAGS += ../libicu-dev_52.1-8+deb8u7_amd64/usr/lib/x86_64-linux-gnu/libicudata.a
-  LINKER_FLAGS += ../libicu-dev_52.1-8+deb8u7_amd64/usr/lib/x86_64-linux-gnu/libicuio.a
-  LINKER_FLAGS += ../libicu-dev_52.1-8+deb8u7_amd64/usr/lib/x86_64-linux-gnu/libicutu.a
-  LINKER_FLAGS += ../libicu-dev_52.1-8+deb8u7_amd64/usr/lib/x86_64-linux-gnu/libicuuc.a
-  LINKER_FLAGS += ../libicu-dev_52.1-8+deb8u7_amd64/usr/lib/x86_64-linux-gnu/libicui18n.a
 endif
+
+FORCE_STATIC_LINKING?=true
+
+ifeq (true, $(FORCE_STATIC_LINKING))
+	ifeq (Darwin, $(PLATFORM))
+		LINKER_FLAGS += -L$(OPENSSL_LIB_DIR) \
+						$(FORCE_STATIC_LIB_PREFERENCE) $(OPENSSL_LIB_DIR)/libcrypto.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
+						$(FORCE_STATIC_LIB_PREFERENCE) $(OPENSSL_LIB_DIR)/libssl.a $(ALLOW_DYNAMIC_LIB_PREFERENCE)
+
+		LINKER_FLAGS += -L$(ICU_LIB_DIR) \
+						$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicudata.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
+						$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicuio.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
+						$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicutu.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
+						$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicuuc.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
+						$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicui18n.a $(ALLOW_DYNAMIC_LIB_PREFERENCE)
+	else
+		LINKER_FLAGS += -L$(OPENSSL_LIB_DIR) \
+						$(FORCE_STATIC_LIB_PREFERENCE) \
+						-lcrypto -lssl \
+						$(ALLOW_DYNAMIC_LIB_PREFERENCE)
+
+		LINKER_FLAGS += -L$(ICU_LIB_DIR) \
+						$(FORCE_STATIC_LIB_PREFERENCE) \
+						-licudata \
+						-licuio \
+						-licutu \
+						-licuuc \
+						-licui18n \
+						$(ALLOW_DYNAMIC_LIB_PREFERENCE)
+	endif
+else
+	LINKER_FLAGS += -L$(OPENSSL_LIB_DIR) \
+					-lcrypto \
+					-lssl
+
+	LINKER_FLAGS += -L$(ICU_LIB_DIR) \
+					-licudata \
+					-licuio \
+					-licutu \
+					-licuuc \
+					-licui18n
+endif
+
 $(shell sed -e s#@VERSION@#${LIB_VERSION}#g pg-cpp-utils.control.tpl > pg-cpp-utils.control)
 $(shell sed -e s#x\.x\.xx#${LIB_VERSION}#g src/pg/cpp/utils/versioning.h.tpl > src/pg/cpp/utils/versioning.h)
 

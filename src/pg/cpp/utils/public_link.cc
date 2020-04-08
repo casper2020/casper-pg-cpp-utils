@@ -91,10 +91,20 @@ void pg::cpp::utils::PublicLink::Calculate (const std::string& a_base_url,
     unsigned char* out  = nullptr;
     int            outl = 0;
 
-    EVP_CIPHER_CTX ctx;
-    EVP_CIPHER_CTX_init(&ctx);
+#if OPENSSL_VERSION_NUMBER < 0x1010000fL
+    EVP_CIPHER_CTX    _ctx;
+    EVP_CIPHER_CTX*    ctx = &_ctx;
+#else
+    EVP_CIPHER_CTX*    ctx = nullptr;
+#endif
 
     try {
+
+#if OPENSSL_VERSION_NUMBER < 0x1010000fL
+        EVP_CIPHER_CTX_init(ctx);
+#else
+        ctx = EVP_CIPHER_CTX_new();
+#endif
 
         //
         // RESET
@@ -120,8 +130,12 @@ void pg::cpp::utils::PublicLink::Calculate (const std::string& a_base_url,
         // - enables or disables padding;
         // - always returns 1;
         //
-        if ( 1 != EVP_CIPHER_CTX_set_padding(&ctx, 1) ) {
-            EVP_CIPHER_CTX_cleanup(&ctx);
+        if ( 1 != EVP_CIPHER_CTX_set_padding(ctx, 1) ) {
+#if OPENSSL_VERSION_NUMBER < 0x1010000fL
+            EVP_CIPHER_CTX_cleanup(ctx);
+#else
+            EVP_CIPHER_CTX_free(ctx);
+#endif
             throw PG_CPP_UTILS_EXCEPTION_NA("Unable to set padding!");
         }
 
@@ -147,8 +161,12 @@ void pg::cpp::utils::PublicLink::Calculate (const std::string& a_base_url,
         // - sets up cipher context ctx for encryption with cipher type from ENGINE impl;
         // - return 1 for success and 0 for failure;
         //
-        if ( 1 != EVP_EncryptInit_ex(&ctx, cipher, NULL, key, iv) ) {
-            EVP_CIPHER_CTX_cleanup(&ctx);
+        if ( 1 != EVP_EncryptInit_ex(ctx, cipher, NULL, key, iv) ) {
+#if OPENSSL_VERSION_NUMBER < 0x1010000fL
+            EVP_CIPHER_CTX_cleanup(ctx);
+#else
+            EVP_CIPHER_CTX_free(ctx);
+#endif
             throw PG_CPP_UTILS_EXCEPTION_NA("Unable to initialize cipher!");
         }
 
@@ -165,8 +183,12 @@ void pg::cpp::utils::PublicLink::Calculate (const std::string& a_base_url,
         // - encrypts inl bytes from the buffer in and writes the encrypted version to out;
         // - return 1 for success and 0 for failure;
         //
-        if ( 1 != EVP_EncryptUpdate(&ctx, out, &outl, in, inl) ) {
-            EVP_CIPHER_CTX_cleanup(&ctx);
+        if ( 1 != EVP_EncryptUpdate(ctx, out, &outl, in, inl) ) {
+#if OPENSSL_VERSION_NUMBER < 0x1010000fL
+            EVP_CIPHER_CTX_cleanup(ctx);
+#else
+            EVP_CIPHER_CTX_free(ctx);
+#endif
             throw PG_CPP_UTILS_EXCEPTION_NA("Unable to update encryption!");
         }
 
@@ -178,8 +200,12 @@ void pg::cpp::utils::PublicLink::Calculate (const std::string& a_base_url,
         // - encrypts the "final" data, that is any data that remains in a partial block;
         // - return 1 for success and 0 for failure;
         //
-        if ( 1 != EVP_EncryptFinal_ex(&ctx, out + encrypted_length, &outl) ) {
-            EVP_CIPHER_CTX_cleanup(&ctx);
+        if ( 1 != EVP_EncryptFinal_ex(ctx, out + encrypted_length, &outl) ) {
+#if OPENSSL_VERSION_NUMBER < 0x1010000fL
+            EVP_CIPHER_CTX_cleanup(ctx);
+#else
+            EVP_CIPHER_CTX_free(ctx);
+#endif
             throw PG_CPP_UTILS_EXCEPTION_NA("Unable to finalize encryption!");
         }
         encrypted_length += outl;
@@ -192,7 +218,11 @@ void pg::cpp::utils::PublicLink::Calculate (const std::string& a_base_url,
         //
         // - returns 1 for success and 0 for failure.
         //
-        EVP_CIPHER_CTX_cleanup(&ctx);
+#if OPENSSL_VERSION_NUMBER < 0x1010000fL
+            EVP_CIPHER_CTX_cleanup(ctx);
+#else
+            EVP_CIPHER_CTX_free(ctx);
+#endif
         delete [] out;
         if ( nullptr != key ) {
             delete [] key;
