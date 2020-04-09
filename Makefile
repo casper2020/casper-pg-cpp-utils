@@ -24,10 +24,49 @@
 include Settings.mk
 
 #####################
-# SET EXTERNA TOOLS
+# SET PLATFORM
 #####################
 
 PLATFORM := $(shell uname -s)
+####################
+# Set target type
+####################
+ifeq (Darwin, $(PLATFORM))
+ ifndef TARGET
+   TARGET:=Debug
+ else
+   override TARGET:=$(shell echo $(TARGET) | tr A-Z a-z)
+   $(eval TARGET_E:=$$$(TARGET))
+   TARGET_E:=$(shell echo $(TARGET_E) | tr A-Z a-z )
+   TARGET_S:=$(subst $(TARGET_E),,$(TARGET))
+   TARGET_S:=$(shell echo $(TARGET_S) | tr a-z A-Z )
+   TMP_TARGET:=$(TARGET_S)$(TARGET_E)
+   override TARGET:=$(TMP_TARGET)
+ endif
+else
+ ifndef TARGET
+   TARGET:=debug
+  else
+   override TARGET:=$(shell echo $(TARGET) | tr A-Z a-z)
+  endif
+endif
+TARGET_LC:=$(shell echo $(TARGET) | tr A-Z a-z)
+
+# validate target
+ifeq (release, $(TARGET_LC))
+  #
+else
+  ifeq (debug, $(TARGET_LC))
+    #
+  else
+    $(error "Don't know how to build for target $(TARGET_LC) ")
+  endif
+endif
+
+#####################
+# SET EXTERNAl TOOLS
+#####################
+
 RAGEL    := $(shell which ragel)
 ifeq (Darwin, $(PLATFORM))
 	YACC := /usr/local/Cellar/bison/3.0.4/bin/bison
@@ -41,10 +80,10 @@ POSTGRESQL_HEADERS_OTHER_C_DIR := $(POSTGRESQL_HEADERS_DIR:server=)
 ifeq (Darwin, $(PLATFORM))
   ICU_INCLUDE_DIR?=/usr/local/opt/icu4c/include
   ICU_LIB_DIR?=/usr/local/opt/icu4c/lib
-  OPENSSL_INCLUDE_DIR?=/usr/local/opt/openssl/include
-  OPENSSL_LIB_DIR?=/usr/local/opt/openssl/lib
-  FORCE_STATIC_LIB_PREFERENCE:=-Wl,-force_load # -Wl, -Bstatic
-  ALLOW_DYNAMIC_LIB_PREFERENCE:=-Wl,-noall_load # -Wl, -Bdynamic
+  OPENSSL_INCLUDE_DIR?=../casper-packager/openssl/darwin/pkg/$(TARGET)/openssl/usr/local/casper/openssl/include
+  OPENSSL_LIB_DIR?=../casper-packager/openssl/darwin/pkg/$(TARGET)/openssl/usr/local/casper/openssl/lib
+  FORCE_STATIC_LIB_PREFERENCE:=-Wl, -Bstatic   #-Wl,-force_load # 
+  ALLOW_DYNAMIC_LIB_PREFERENCE:=-Wl, -Bdynamic # -Wl,-noall_load
 else
   ICU_INCLUDE_DIR?=$(shell readlink -m ../debian-10/libicu-dev_63.1-6+deb10u1_amd64/usr/include/unicode)
   ICU_LIB_DIR?=$(shell readlink -m ../debian-10/libicu-dev_63.1-6+deb10u1_amd64/usr/lib/x86_64-linux-gnu)
@@ -85,41 +124,6 @@ FPG_HEADERS_SEARCH_PATH += -I $(OPENSSL_INCLUDE_DIR)
 PG_CPPFLAGS := $(FPG_HEADERS_SEARCH_PATH)
 PG_CXXFLAGS := $(FPG_HEADERS_SEARCH_PATH)
 
-####################
-# Set target type
-####################
-ifeq (Darwin, $(PLATFORM))
- ifndef TARGET
-   TARGET:=Debug
- else
-   override TARGET:=$(shell echo $(TARGET) | tr A-Z a-z)
-   $(eval TARGET_E:=$$$(TARGET))
-   TARGET_E:=$(shell echo $(TARGET_E) | tr A-Z a-z )
-   TARGET_S:=$(subst $(TARGET_E),,$(TARGET))
-   TARGET_S:=$(shell echo $(TARGET_S) | tr a-z A-Z )
-   TMP_TARGET:=$(TARGET_S)$(TARGET_E)
-   override TARGET:=$(TMP_TARGET)
- endif
-else
- ifndef TARGET
-   TARGET:=debug
-  else
-   override TARGET:=$(shell echo $(TARGET) | tr A-Z a-z)
-  endif
-endif
-TARGET_LC:=$(shell echo $(TARGET) | tr A-Z a-z)
-
-# validate target
-ifeq (release, $(TARGET_LC))
-  #
-else
-  ifeq (debug, $(TARGET_LC))
-    #
-  else
-    $(error "Don't know how to build for target $(TARGET_LC) ")
-  endif
-endif
-
 ######################
 # Set compiler flags
 ######################
@@ -143,7 +147,7 @@ endif
 ############################
 LIB_NAME := pg-cpp-utils
 ifndef LIB_VERSION
-  LIB_VERSION := "0.0.00"
+  LIB_VERSION := $(shell cat ../casper-packager/pg-cpp-utils/version)
 endif
 LINKER_FLAGS =
 ifeq (Darwin, $(PLATFORM))
@@ -203,8 +207,12 @@ $(shell sed -e s#x\.x\.xx#${LIB_VERSION}#g src/pg/cpp/utils/versioning.h.tpl > s
 ################
 EXTENSION   := $(LIB_NAME)
 EXTVERSION  := $(LIB_VERSION)
-SHLIB_LINK  := -lstdc++
-PG_LIBS     := $(LINKER_FLAGS)
+SHLIB_LINK := -lstdc++
+ifeq (Darwin, $(PLATFORM))
+SHLIB_LINK += $(LINKER_FLAGS)
+else 
+  PG_LIBS := $(LINKER_FLAGS)
+endif
 MODULE_big  := $(LIB_NAME)
 EXTRA_CLEAN :=
 PGXS        := $(shell $(PG_CONFIG) --pgxs)
