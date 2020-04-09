@@ -46,8 +46,8 @@ ifeq (Darwin, $(PLATFORM))
   FORCE_STATIC_LIB_PREFERENCE:=-Wl,-force_load # -Wl, -Bstatic
   ALLOW_DYNAMIC_LIB_PREFERENCE:=-Wl,-noall_load # -Wl, -Bdynamic
 else
-  ICU_INCLUDE_DIR?=../libicu-dev_52.1-8+deb8u7_amd64/usr/include/unicode
-  ICU_LIB_DIR?=../libicu-dev_52.1-8+deb8u7_amd64/usr/lib/x86_64-linux-gnu
+  ICU_INCLUDE_DIR?=$(shell readlink -m ../debian-10/libicu-dev_63.1-6+deb10u1_amd64/usr/include/unicode)
+  ICU_LIB_DIR?=$(shell readlink -m ../debian-10/libicu-dev_63.1-6+deb10u1_amd64/usr/lib/x86_64-linux-gnu)
   OPENSSL_INCLUDE_DIR?=/usr/include
   OPENSSL_LIB_DIR?=/usr/lib/x86_64-linux-gnu/
   FORCE_STATIC_LIB_PREFERENCE:=-Wl,-Bstatic
@@ -58,15 +58,15 @@ endif
 # SOURCE & INCLUDES
 #####################
 
-SRC := src/pg-cpp-utils.cc                   \
-	   src/pg/cpp/utils/version.cc           \
-	   src/pg/cpp/utils/utility.cc           \
-	   src/pg/cpp/utils/b64.cc               \
-	   src/pg/cpp/utils/invoice_hash.cc      \
-	   src/pg/cpp/utils/public_link.cc       \
-	   src/pg/cpp/utils/number_spellout.cc   \
-	   src/pg/cpp/utils/number_formatter.cc  \
-	   src/pg/cpp/utils/message_formatter.cc
+SRC := src/pg-cpp-utils.cc                    \
+	src/pg/cpp/utils/version.cc           \
+	src/pg/cpp/utils/utility.cc           \
+	src/pg/cpp/utils/b64.cc               \
+	src/pg/cpp/utils/invoice_hash.cc      \
+	src/pg/cpp/utils/public_link.cc       \
+	src/pg/cpp/utils/number_spellout.cc   \
+	src/pg/cpp/utils/number_formatter.cc  \
+	src/pg/cpp/utils/message_formatter.cc
 
 JSONCPP_SRC := src/jsoncpp/jsoncpp.cpp
 OSAL_SRC    := ../casper-osal/src/osal/posix/posix_time.cc
@@ -78,8 +78,9 @@ FPG_HEADERS_SEARCH_PATH := \
 	-I $(POSTGRESQL_HEADERS_OTHER_C_DIR) \
 	-I src
 
-FPG_HEADERS_SEARCH_PATH += -I $(OPENSSL_INCLUDE_DIR) -I $(ICU_INCLUDE_DIR)
+FPG_HEADERS_SEARCH_PATH += -I $(ICU_INCLUDE_DIR)
 FPG_HEADERS_SEARCH_PATH += -I ../casper-osal/src -I ../cppcodec
+FPG_HEADERS_SEARCH_PATH += -I $(OPENSSL_INCLUDE_DIR)
 
 PG_CPPFLAGS := $(FPG_HEADERS_SEARCH_PATH)
 PG_CXXFLAGS := $(FPG_HEADERS_SEARCH_PATH)
@@ -142,7 +143,7 @@ endif
 ############################
 LIB_NAME := pg-cpp-utils
 ifndef LIB_VERSION
-	LIB_VERSION := "0.0.00"
+  LIB_VERSION := "0.0.00"
 endif
 LINKER_FLAGS =
 ifeq (Darwin, $(PLATFORM))
@@ -157,41 +158,41 @@ FORCE_STATIC_LINKING?=true
 ifeq (true, $(FORCE_STATIC_LINKING))
 	ifeq (Darwin, $(PLATFORM))
 		LINKER_FLAGS += -L$(OPENSSL_LIB_DIR) \
-						$(FORCE_STATIC_LIB_PREFERENCE) $(OPENSSL_LIB_DIR)/libcrypto.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
-						$(FORCE_STATIC_LIB_PREFERENCE) $(OPENSSL_LIB_DIR)/libssl.a $(ALLOW_DYNAMIC_LIB_PREFERENCE)
+				  $(FORCE_STATIC_LIB_PREFERENCE) $(OPENSSL_LIB_DIR)/libcrypto.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
+				  $(FORCE_STATIC_LIB_PREFERENCE) $(OPENSSL_LIB_DIR)/libssl.a $(ALLOW_DYNAMIC_LIB_PREFERENCE)
 
 		LINKER_FLAGS += -L$(ICU_LIB_DIR) \
-						$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicudata.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
-						$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicuio.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
-						$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicutu.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
-						$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicuuc.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
-						$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicui18n.a $(ALLOW_DYNAMIC_LIB_PREFERENCE)
+				  $(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicudata.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
+				  $(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicuio.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
+				  $(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicutu.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
+				  $(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicuuc.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
+				  $(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicui18n.a $(ALLOW_DYNAMIC_LIB_PREFERENCE)
 	else
 		LINKER_FLAGS += -L$(OPENSSL_LIB_DIR) \
-						$(FORCE_STATIC_LIB_PREFERENCE) \
-						-lcrypto -lssl \
-						$(ALLOW_DYNAMIC_LIB_PREFERENCE)
+				  $(FORCE_STATIC_LIB_PREFERENCE) \
+				   -lcrypto -lssl \
+				  $(ALLOW_DYNAMIC_LIB_PREFERENCE)
 
 		LINKER_FLAGS += -L$(ICU_LIB_DIR) \
-						$(FORCE_STATIC_LIB_PREFERENCE) \
-						-licudata \
-						-licuio \
-						-licutu \
-						-licuuc \
-						-licui18n \
-						$(ALLOW_DYNAMIC_LIB_PREFERENCE)
+				  $(FORCE_STATIC_LIB_PREFERENCE) \
+			 	   -licudata \
+				   -licuio \
+				   -licutu \
+				   -licuuc \
+				   -licui18n \
+				  $(ALLOW_DYNAMIC_LIB_PREFERENCE)
 	endif
 else
 	LINKER_FLAGS += -L$(OPENSSL_LIB_DIR) \
-					-lcrypto \
-					-lssl
+			-lcrypto \
+			-lssl
 
 	LINKER_FLAGS += -L$(ICU_LIB_DIR) \
-					-licudata \
-					-licuio \
-					-licutu \
-					-licuuc \
-					-licui18n
+			-licudata \
+			-licuio   \
+			-licutu   \
+			-licuuc   \
+			-licui18n
 endif
 
 $(shell sed -e s#@VERSION@#${LIB_VERSION}#g pg-cpp-utils.control.tpl > pg-cpp-utils.control)
@@ -202,7 +203,8 @@ $(shell sed -e s#x\.x\.xx#${LIB_VERSION}#g src/pg/cpp/utils/versioning.h.tpl > s
 ################
 EXTENSION   := $(LIB_NAME)
 EXTVERSION  := $(LIB_VERSION)
-SHLIB_LINK  := -lstdc++ $(LINKER_FLAGS)
+SHLIB_LINK  := -lstdc++
+PG_LIBS     := $(LINKER_FLAGS)
 MODULE_big  := $(LIB_NAME)
 EXTRA_CLEAN :=
 PGXS        := $(shell $(PG_CONFIG) --pgxs)
