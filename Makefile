@@ -23,11 +23,9 @@
 
 include Settings.mk
 
-#####################
-# SET PLATFORM
-#####################
+PLATFORM    := $(shell uname -s)
+PLATFORM_LC := $(shell echo $(PLATFORM) | tr A-Z a-z)
 
-PLATFORM := $(shell uname -s)
 ####################
 # Set target type
 ####################
@@ -64,26 +62,42 @@ else
 endif
 
 #####################
-# SET EXTERNAl TOOLS
+# SET EXTERNAL TOOLS
 #####################
 
 RAGEL    := $(shell which ragel)
 ifeq (Darwin, $(PLATFORM))
-	YACC := /usr/local/Cellar/bison/3.0.4/bin/bison
+  YACC := /usr/local/Cellar/bison/3.0.4/bin/bison
+  READLINK_CMD := greadlink
 else
-	YACC := $(shell which bison)
+  YACC := $(shell which bison)
+  READLINK_CMD := readlink
 endif
 PG_CONFIG                      ?= $(shell which pg_config)
 POSTGRESQL_HEADERS_DIR 	       := $(shell $(PG_CONFIG) --includedir-server)
 POSTGRESQL_HEADERS_OTHER_C_DIR := $(POSTGRESQL_HEADERS_DIR:server=)
 
+USE_CUSTOM_COMPILED_LIBS?=false
+
+CC_ICU_INCLUDE_DIR?=$(shell $(READLINK_CMD) -m ../v8/third_party/icu/source)
+CC_ICU_LIB_DIR?=$(shell $(READLINK_CMD) -m ../v8/out.gn/x64.${TARGET_LC}/obj/third_party/icu)
+CC_OPENSS_INCLUDE_DIR?=$(shell $(READLINK_CMD) -m ../casper-packager/openssl/$(PLATFORM_LC)/pkg/$(TARGET)/openssl/usr/local/casper/openssl/include)
+CC_OPENSS_LIB_DIR?=$(shell $(READLINK_CMD) -m ../casper-packager/openssl/$(PLATFORM_LC)/pkg/$(TARGET)/openssl/usr/local/casper/openssl/lib)
+
+ifeq (true, $(USE_CUSTOM_COMPILED_LIBS))
+  ICU_INCLUDE_DIR?=$(CC_ICU_INCLUDE_DIR)/i18n -I $(CC_ICU_INCLUDE_DIR)/common
+  ICU_LIB_DIR?=$(CC_ICU_LIB_DIR)
+  OPENSSL_INCLUDE_DIR?=$(CC_OPENSS_INCLUDE_DIR)
+  OPENSSL_LIB_DIR?=$(CC_OPENSS_LIB_DIR)
+endif
+
 ifeq (Darwin, $(PLATFORM))
   ICU_INCLUDE_DIR?=/usr/local/opt/icu4c/include
   ICU_LIB_DIR?=/usr/local/opt/icu4c/lib
-  OPENSSL_INCLUDE_DIR?=../casper-packager/openssl/darwin/pkg/$(TARGET)/openssl/usr/local/casper/openssl/include
-  OPENSSL_LIB_DIR?=../casper-packager/openssl/darwin/pkg/$(TARGET)/openssl/usr/local/casper/openssl/lib
-  FORCE_STATIC_LIB_PREFERENCE:=-Wl, -Bstatic   #-Wl,-force_load # 
-  ALLOW_DYNAMIC_LIB_PREFERENCE:=-Wl, -Bdynamic # -Wl,-noall_load
+  OPENSSL_INCLUDE_DIR?=/usr/local/opt/openssl/include
+  OPENSSL_LIB_DIR?=/usr/local/opt/openssl/lib
+  FORCE_STATIC_LIB_PREFERENCE:=-Wl,-force_load # -Wl, -Bstatic
+  ALLOW_DYNAMIC_LIB_PREFERENCE:=-Wl,-noall_load # -Wl, -Bdynamic
 else
   ICU_INCLUDE_DIR?=$(shell readlink -m ../debian-10/libicu-dev_63.1-6+deb10u1_amd64/usr/include/unicode)
   ICU_LIB_DIR?=$(shell readlink -m ../debian-10/libicu-dev_63.1-6+deb10u1_amd64/usr/lib/x86_64-linux-gnu)
@@ -161,42 +175,43 @@ FORCE_STATIC_LINKING?=true
 
 ifeq (true, $(FORCE_STATIC_LINKING))
 	ifeq (Darwin, $(PLATFORM))
+		# OPENSSL
 		LINKER_FLAGS += -L$(OPENSSL_LIB_DIR) \
 				  $(FORCE_STATIC_LIB_PREFERENCE) $(OPENSSL_LIB_DIR)/libcrypto.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
 				  $(FORCE_STATIC_LIB_PREFERENCE) $(OPENSSL_LIB_DIR)/libssl.a $(ALLOW_DYNAMIC_LIB_PREFERENCE)
-
-		LINKER_FLAGS += -L$(ICU_LIB_DIR) \
-				  $(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicudata.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
-				  $(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicuio.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
-				  $(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicutu.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
-				  $(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicuuc.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
-				  $(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicui18n.a $(ALLOW_DYNAMIC_LIB_PREFERENCE)
+		# ICU
+		LINKER_FLAGS += -L$(ICU_LIB_DIR)
+		ifeq (true, $(USE_CUSTOM_COMPILED_LIBS))
+			LINKER_FLAGS += \
+					$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicuuc.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
+					$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicui18n.a $(ALLOW_DYNAMIC_LIB_PREFERENCE)
+		else
+			LINKER_FLAGS += \
+					$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicudata.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
+					$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicuio.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
+					$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicutu.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
+					$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicuuc.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
+					$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicui18n.a $(ALLOW_DYNAMIC_LIB_PREFERENCE)
+		endif
 	else
+		# OPENSSL
 		LINKER_FLAGS += -L$(OPENSSL_LIB_DIR) \
 				  $(FORCE_STATIC_LIB_PREFERENCE) \
 				   -lcrypto -lssl \
 				  $(ALLOW_DYNAMIC_LIB_PREFERENCE)
-
+		# ICU
 		LINKER_FLAGS += -L$(ICU_LIB_DIR) \
-				  $(FORCE_STATIC_LIB_PREFERENCE) \
-			 	   -licudata \
-				   -licuio \
-				   -licutu \
-				   -licuuc \
-				   -licui18n \
-				  $(ALLOW_DYNAMIC_LIB_PREFERENCE)
+				  		  $(FORCE_STATIC_LIB_PREFERENCE)
+		ifeq (true, $(USE_CUSTOM_COMPILED_LIBS))
+			LINKER_FLAGS += -licuuc -licui18n
+		else
+			LINKER_FLAGS += -licuuc -licui18n -licudata -licuio -licutu
+		endif
+		LINKER_FLAGS += $(ALLOW_DYNAMIC_LIB_PREFERENCE)
 	endif
 else
-	LINKER_FLAGS += -L$(OPENSSL_LIB_DIR) \
-			-lcrypto \
-			-lssl
-
-	LINKER_FLAGS += -L$(ICU_LIB_DIR) \
-			-licudata \
-			-licuio   \
-			-licutu   \
-			-licuuc   \
-			-licui18n
+	LINKER_FLAGS += -L$(OPENSSL_LIB_DIR) -lcrypto -lssl
+	LINKER_FLAGS += -L$(ICU_LIB_DIR) $(_ICU_LIBS)
 endif
 
 $(shell sed -e s#@VERSION@#${LIB_VERSION}#g pg-cpp-utils.control.tpl > pg-cpp-utils.control)
@@ -207,11 +222,12 @@ $(shell sed -e s#x\.x\.xx#${LIB_VERSION}#g src/pg/cpp/utils/versioning.h.tpl > s
 ################
 EXTENSION   := $(LIB_NAME)
 EXTVERSION  := $(LIB_VERSION)
-SHLIB_LINK := -lstdc++
+SHLIB_LINK  := -lstdc++
 ifeq (Darwin, $(PLATFORM))
-SHLIB_LINK += $(LINKER_FLAGS)
-else 
-  PG_LIBS := $(LINKER_FLAGS)
+  SHLIB_LINK  += $(LINKER_FLAGS)
+  PG_LIBS     :=
+else
+  PG_LIBS     := $(LINKER_FLAGS)
 endif
 MODULE_big  := $(LIB_NAME)
 EXTRA_CLEAN :=
@@ -281,6 +297,17 @@ ifeq (Darwin, $(PLATFORM))
 else
 	@make
 endif
+
+# info
+info:
+	@echo "LIB_VERSION=$(LIB_VERSION)"	
+	@echo "FORCE_STATIC_LINKING=$(FORCE_STATIC_LINKING)"
+	@echo "_ICU_LIBS=$(_ICU_LIBS)"
+	@echo "ICU_INCLUDE_DIR=$(ICU_INCLUDE_DIR)"
+	@echo "ICU_LIB_DIR=$(ICU_LIB_DIR)"
+	@echo "OPENSSL_INCLUDE_DIR=$(OPENSSL_INCLUDE_DIR)"
+	@echo "OPENSSL_LIB_DIR=$(OPENSSL_LIB_DIR)"
+	@echo "LINKER_FLAGS=$(LINKER_FLAGS)"
 
 # symbols dump
 dump_dyn_symb_table:
