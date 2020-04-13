@@ -95,15 +95,11 @@ ifeq (Darwin, $(PLATFORM))
   ICU_LIB_DIR?=/usr/local/opt/icu4c/lib
   OPENSSL_INCLUDE_DIR?=/usr/local/opt/openssl/include
   OPENSSL_LIB_DIR?=/usr/local/opt/openssl/lib
-  FORCE_STATIC_LIB_PREFERENCE:=-Wl,-force_load # -Wl, -Bstatic
-  ALLOW_DYNAMIC_LIB_PREFERENCE:=-Wl,-noall_load # -Wl, -Bdynamic
 else
   ICU_INCLUDE_DIR?=/usr/include/unicode
   ICU_LIB_DIR?=usr/lib/x86_64-linux-gnu
   OPENSSL_INCLUDE_DIR?=/usr/include
   OPENSSL_LIB_DIR?=/usr/lib/x86_64-linux-gnu/
-  FORCE_STATIC_LIB_PREFERENCE:=-Wl,-Bstatic
-  ALLOW_DYNAMIC_LIB_PREFERENCE:=-Wl,-Bdynamic
 endif
 
 #####################
@@ -170,48 +166,11 @@ else
   LINKER_FLAGS += -Wl,-soname,$(SO_NAME) -Wl,-z,relro -Bsymbolic
 endif
 
-FORCE_STATIC_LINKING?=true
+# TODO LINKER_FLAGS += -Wl,-rpath,/usr/local/casper/icu/lib,-rpath,usr/local/casper/openssl/lib
 
-ifeq (true, $(FORCE_STATIC_LINKING))
-	ifeq (Darwin, $(PLATFORM))
-		# OPENSSL
-		LINKER_FLAGS += -L$(OPENSSL_LIB_DIR) \
-				  $(FORCE_STATIC_LIB_PREFERENCE) $(OPENSSL_LIB_DIR)/libcrypto.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
-				  $(FORCE_STATIC_LIB_PREFERENCE) $(OPENSSL_LIB_DIR)/libssl.a $(ALLOW_DYNAMIC_LIB_PREFERENCE)
-		# ICU
-		LINKER_FLAGS += -L$(ICU_LIB_DIR)
-		ifeq (true, $(USE_CUSTOM_COMPILED_LIBS))
-			LINKER_FLAGS += \
-					$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicuuc.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
-					$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicui18n.a $(ALLOW_DYNAMIC_LIB_PREFERENCE)
-		else
-			LINKER_FLAGS += \
-					$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicudata.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
-					$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicuio.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
-					$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicutu.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
-					$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicuuc.a $(ALLOW_DYNAMIC_LIB_PREFERENCE) \
-					$(FORCE_STATIC_LIB_PREFERENCE) $(ICU_LIB_DIR)/libicui18n.a $(ALLOW_DYNAMIC_LIB_PREFERENCE)
-		endif
-	else
-		# OPENSSL
-		LINKER_FLAGS += -L$(OPENSSL_LIB_DIR) \
-				  $(FORCE_STATIC_LIB_PREFERENCE) \
-				   -lcrypto -lssl \
-				  $(ALLOW_DYNAMIC_LIB_PREFERENCE)
-		# ICU
-		LINKER_FLAGS += -L$(ICU_LIB_DIR) \
-				  		  $(FORCE_STATIC_LIB_PREFERENCE)
-		ifeq (true, $(USE_CUSTOM_COMPILED_LIBS))
-			LINKER_FLAGS += -licuuc -licui18n
-		else
-			LINKER_FLAGS += -licuuc -licui18n -licudata -licuio -licutu
-		endif
-		LINKER_FLAGS += $(ALLOW_DYNAMIC_LIB_PREFERENCE)
-	endif
-else
-	LINKER_FLAGS += -L$(OPENSSL_LIB_DIR) -lcrypto -lssl
-	LINKER_FLAGS += -L$(ICU_LIB_DIR) $(_ICU_LIBS)
-endif
+LINKER_FLAGS += -Wl,-rpath,$(ICU_LIB_DIR),-rpath,$(OPENSSL_LIB_DIR)
+LINKER_FLAGS += -L$(OPENSSL_LIB_DIR) -lcrypto -lssl
+LINKER_FLAGS += -L$(ICU_LIB_DIR) -licuuc -licui18n -licudata -licuio -licutu
 
 $(shell sed -e s#@VERSION@#${LIB_VERSION}#g pg-cpp-utils.control.tpl > pg-cpp-utils.control)
 $(shell sed -e s#x\.x\.xx#${LIB_VERSION}#g src/pg/cpp/utils/versioning.h.tpl > src/pg/cpp/utils/versioning.h)
@@ -221,18 +180,18 @@ $(shell sed -e s#x\.x\.xx#${LIB_VERSION}#g src/pg/cpp/utils/versioning.h.tpl > s
 ################
 EXTENSION   := $(LIB_NAME)
 EXTVERSION  := $(LIB_VERSION)
-SHLIB_LINK  := -lstdc++
-ifeq (Darwin, $(PLATFORM))
-  SHLIB_LINK  += $(LINKER_FLAGS)
-  PG_LIBS     :=
-else
-  PG_LIBS     := $(LINKER_FLAGS)
-endif
+PG_LDFLAGS  := -lstdc++ 
+SHLIB_LINK  := $(LINKER_FLAGS)
+PG_LIBS     := 
 MODULE_big  := $(LIB_NAME)
 EXTRA_CLEAN :=
 PGXS        := $(shell $(PG_CONFIG) --pgxs)
 
 include $(PGXS)
+
+override LDFLAGS :=
+override LIBS:=$(LIBS:-lcrypto=)
+override LIBS:=$(LIBS:-lssl=)
 
 ##############################
 # Set rules for .so / .dylib
@@ -299,14 +258,15 @@ endif
 
 # info
 info:
+	@echo "LDFLAGS=$(LDFLAGS)"
 	@echo "LIB_VERSION=$(LIB_VERSION)"	
-	@echo "FORCE_STATIC_LINKING=$(FORCE_STATIC_LINKING)"
 	@echo "_ICU_LIBS=$(_ICU_LIBS)"
 	@echo "ICU_INCLUDE_DIR=$(ICU_INCLUDE_DIR)"
 	@echo "ICU_LIB_DIR=$(ICU_LIB_DIR)"
 	@echo "OPENSSL_INCLUDE_DIR=$(OPENSSL_INCLUDE_DIR)"
 	@echo "OPENSSL_LIB_DIR=$(OPENSSL_LIB_DIR)"
 	@echo "LINKER_FLAGS=$(LINKER_FLAGS)"
+	@echo "LIBS=$(LIBS)"
 
 # symbols dump
 dump_dyn_symb_table:
