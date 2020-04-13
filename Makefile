@@ -77,15 +77,14 @@ PG_CONFIG                      ?= $(shell which pg_config)
 POSTGRESQL_HEADERS_DIR 	       := $(shell $(PG_CONFIG) --includedir-server)
 POSTGRESQL_HEADERS_OTHER_C_DIR := $(POSTGRESQL_HEADERS_DIR:server=)
 
-USE_CUSTOM_COMPILED_LIBS?=false
-
-CC_ICU_INCLUDE_DIR?=$(shell $(READLINK_CMD) -m ../v8/third_party/icu/source)
-CC_ICU_LIB_DIR?=$(shell $(READLINK_CMD) -m ../v8/out.gn/x64.${TARGET_LC}/obj/third_party/icu)
+USE_CUSTOM_COMPILED_LIBS?=true
+CC_ICU_INCLUDE_DIR?=$(shell $(READLINK_CMD) -m ../casper-packager/icu/$(PLATFORM_LC)/pkg/$(TARGET)/icu/usr/local/casper/icu/include)
+CC_ICU_LIB_DIR?=$(shell $(READLINK_CMD) -m ../casper-packager/icu/$(PLATFORM_LC)/pkg/$(TARGET)/icu/usr/local/casper/icu/lib)
 CC_OPENSS_INCLUDE_DIR?=$(shell $(READLINK_CMD) -m ../casper-packager/openssl/$(PLATFORM_LC)/pkg/$(TARGET)/openssl/usr/local/casper/openssl/include)
 CC_OPENSS_LIB_DIR?=$(shell $(READLINK_CMD) -m ../casper-packager/openssl/$(PLATFORM_LC)/pkg/$(TARGET)/openssl/usr/local/casper/openssl/lib)
 
 ifeq (true, $(USE_CUSTOM_COMPILED_LIBS))
-  ICU_INCLUDE_DIR?=$(CC_ICU_INCLUDE_DIR)/i18n -I $(CC_ICU_INCLUDE_DIR)/common
+  ICU_INCLUDE_DIR?=$(CC_ICU_INCLUDE_DIR)
   ICU_LIB_DIR?=$(CC_ICU_LIB_DIR)
   OPENSSL_INCLUDE_DIR?=$(CC_OPENSS_INCLUDE_DIR)
   OPENSSL_LIB_DIR?=$(CC_OPENSS_LIB_DIR)
@@ -99,8 +98,8 @@ ifeq (Darwin, $(PLATFORM))
   FORCE_STATIC_LIB_PREFERENCE:=-Wl,-force_load # -Wl, -Bstatic
   ALLOW_DYNAMIC_LIB_PREFERENCE:=-Wl,-noall_load # -Wl, -Bdynamic
 else
-  ICU_INCLUDE_DIR?=$(shell readlink -m ../debian-10/libicu-dev_63.1-6+deb10u1_amd64/usr/include/unicode)
-  ICU_LIB_DIR?=$(shell readlink -m ../debian-10/libicu-dev_63.1-6+deb10u1_amd64/usr/lib/x86_64-linux-gnu)
+  ICU_INCLUDE_DIR?=/usr/include/unicode
+  ICU_LIB_DIR?=usr/lib/x86_64-linux-gnu
   OPENSSL_INCLUDE_DIR?=/usr/include
   OPENSSL_LIB_DIR?=/usr/lib/x86_64-linux-gnu/
   FORCE_STATIC_LIB_PREFERENCE:=-Wl,-Bstatic
