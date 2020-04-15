@@ -67,7 +67,7 @@ endif
 
 RAGEL    := $(shell which ragel)
 ifeq (Darwin, $(PLATFORM))
-  YACC := /usr/local/Cellar/bison/3.0.4/bin/bison
+  YACC := /usr/local/Cellar/bison/3.5/bin/bison
   READLINK_CMD := greadlink
 else
   YACC := $(shell which bison)
@@ -121,6 +121,7 @@ OSAL_SRC    := ../casper-osal/src/osal/posix/posix_time.cc
 
 OBJS := $(SRC:.cc=.o) $(JSONCPP_SRC:.cpp=.o) $(OSAL_SRC:.cc=.o)
 
+### HEADERS SEARCH PATHS ###
 FPG_HEADERS_SEARCH_PATH := \
 	-I $(POSTGRESQL_HEADERS_DIR) 	     \
 	-I $(POSTGRESQL_HEADERS_OTHER_C_DIR) \
@@ -131,7 +132,6 @@ FPG_HEADERS_SEARCH_PATH += -I ../casper-osal/src -I ../cppcodec
 FPG_HEADERS_SEARCH_PATH += -I $(OPENSSL_INCLUDE_DIR)
 
 PG_CPPFLAGS := $(FPG_HEADERS_SEARCH_PATH)
-PG_CXXFLAGS := $(FPG_HEADERS_SEARCH_PATH)
 
 ######################
 # Set compiler flags
@@ -166,8 +166,7 @@ else
   LINKER_FLAGS += -Wl,-soname,$(SO_NAME) -Wl,-z,relro -Bsymbolic
 endif
 
-# TODO LINKER_FLAGS += -Wl,-rpath,/usr/local/casper/icu/lib,-rpath,usr/local/casper/openssl/lib
-
+LINKER_FLAGS += -lstdc++
 LINKER_FLAGS += -Wl,-rpath,$(ICU_LIB_DIR),-rpath,$(OPENSSL_LIB_DIR)
 LINKER_FLAGS += -L$(OPENSSL_LIB_DIR) -lcrypto -lssl
 LINKER_FLAGS += -L$(ICU_LIB_DIR) -licuuc -licui18n -licudata -licuio -licutu
