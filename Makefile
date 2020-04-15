@@ -78,11 +78,37 @@ POSTGRESQL_HEADERS_DIR 	       := $(shell $(PG_CONFIG) --includedir-server)
 POSTGRESQL_HEADERS_OTHER_C_DIR := $(POSTGRESQL_HEADERS_DIR:server=)
 
 USE_CUSTOM_COMPILED_LIBS?=true
-CC_ICU_INCLUDE_DIR?=$(shell $(READLINK_CMD) -m ../casper-packager/icu/$(PLATFORM_LC)/pkg/$(TARGET)/icu/usr/local/casper/icu/include)
-CC_ICU_LIB_DIR?=$(shell $(READLINK_CMD) -m ../casper-packager/icu/$(PLATFORM_LC)/pkg/$(TARGET)/icu/usr/local/casper/icu/lib)
-CC_OPENSS_INCLUDE_DIR?=$(shell $(READLINK_CMD) -m ../casper-packager/openssl/$(PLATFORM_LC)/pkg/$(TARGET)/openssl/usr/local/casper/openssl/include)
-CC_OPENSS_LIB_DIR?=$(shell $(READLINK_CMD) -m ../casper-packager/openssl/$(PLATFORM_LC)/pkg/$(TARGET)/openssl/usr/local/casper/openssl/lib)
 
+CC_PACKAGER_DIR?=$(shell $(READLINK_CMD) -m ../casper-packager)
+
+# ICU
+CC_ICU_DIR?=$(CC_PACKAGER_DIR)/icu/$(PLATFORM_LC)/pkg/$(TARGET)/icu/usr/local/casper/icu
+CC_ICU_VERSION?=$(shell cat  $(CC_PACKAGER_DIR)/icu/version | cut -d'-' -f1)
+CC_ICU_INCLUDE_DIR?=$(CC_ICU_DIR)/include
+CC_ICU_LIB_DIR?=$(CC_ICU_DIR)/lib
+
+CC_ICU_LIBS_FN=
+ifeq (true, $(USE_CUSTOM_COMPILED_LIBS))
+  ifeq (Darwin, $(PLATFORM))
+    CC_ICU_LIBS_FN=libicuuc.$(CC_ICU_VERSION).dylib libicui18n.$(CC_ICU_VERSION).dylib libicudata.$(CC_ICU_VERSION).dylib libicuio.$(CC_ICU_VERSION).dylib libicutu.$(CC_ICU_VERSION).dylib
+  endif
+endif
+
+# OPENSSL
+CC_OPENSSL_DIR?=$(CC_PACKAGER_DIR)/openssl/$(PLATFORM_LC)/pkg/$(TARGET)/openssl/usr/local/casper/openssl
+CC_OPENSSL_VERSION?=$(shell cat  $(CC_PACKAGER_DIR)/openssl/version | tr -dc '0-9.' | cut -d'.' -f1-2)
+
+CC_OPENSS_INCLUDE_DIR?=$(CC_OPENSSL_DIR)/include
+CC_OPENSS_LIB_DIR?=$(CC_OPENSSL_DIR)/lib
+
+CC_OPENSSL_LIBS_FN=
+ifeq (true, $(USE_CUSTOM_COMPILED_LIBS))
+  ifeq (Darwin, $(PLATFORM))
+    CC_OPENSSL_LIBS_FN=libcrypto.$(CC_OPENSSL_VERSION).dylib libssl.$(CC_OPENSSL_VERSION).dylib
+  endif
+endif
+
+#
 ifeq (true, $(USE_CUSTOM_COMPILED_LIBS))
   ICU_INCLUDE_DIR?=$(CC_ICU_INCLUDE_DIR)
   ICU_LIB_DIR?=$(CC_ICU_LIB_DIR)
@@ -156,7 +182,7 @@ endif
 ############################
 LIB_NAME := pg-cpp-utils
 ifndef LIB_VERSION
-  LIB_VERSION := $(shell cat ../casper-packager/pg-cpp-utils/version)
+  LIB_VERSION := $(shell cat $(CC_PACKAGER_DIR)/pg-cpp-utils/version)
 endif
 LINKER_FLAGS =
 ifeq (Darwin, $(PLATFORM))
@@ -183,7 +209,7 @@ PG_LDFLAGS  := -lstdc++
 SHLIB_LINK  := $(LINKER_FLAGS)
 PG_LIBS     := 
 MODULE_big  := $(LIB_NAME)
-EXTRA_CLEAN :=
+EXTRA_CLEAN := $(LIB_NAME).so* $(LIB_NAME).dylib*
 PGXS        := $(shell $(PG_CONFIG) --pgxs)
 
 include $(PGXS)
@@ -208,13 +234,11 @@ shared_object: $(OBJS)
 
 # c++
 .cc.o:
-	@echo "$(FPG_HEADERS_SEARCH_PATH)"
 	@echo "* cc  [$(TARGET)] $< ..."
-	$(CXX) $(CXXFLAGS) $< -o $@
+	@$(CXX) $(CXXFLAGS) $< -o $@
 
 # c++
 .cpp.o:
-	@echo "$(FPG_HEADERS_SEARCH_PATH)"
 	@echo "* cpp [$(TARGET)] $< ..."
 	@$(CXX) $(CXXFLAGS) $< -o $@
 
@@ -225,7 +249,6 @@ clean_all: clean_bison clean_ragel
 	@find .. -name "*~" -delete
 	@find . -name "$(LIB_NAME).so*" -delete
 	@find . -name "$(LIB_NAME).dylib*" -delete
-	@rm -f $(LIB_NAME)
 
 # so
 so:
@@ -253,6 +276,24 @@ ifeq (Darwin, $(PLATFORM))
 	@make install
 else
 	@make
+endif
+
+#
+rpath:
+	@echo "* macOS [$(TARGET)] fix rpath..."
+ifeq (true, $(USE_CUSTOM_COMPILED_LIBS))
+	@echo "* CC_ICU_LIB_DIR=$(CC_ICU_LIB_DIR): $(CC_ICU_LIBS_FN)"
+	@echo "* CC_OPENSS_LIB_DIR=$(CC_OPENSS_LIB_DIR): $(CC_OPENSSL_LIBS_FN)"
+ifeq (Darwin, $(PLATFORM))
+	@otool -L $(LIB_NAME).so
+	@$(foreach lib,$(CC_ICU_LIBS_FN), install_name_tool -change $(lib) $(CC_ICU_LIB_DIR)/$(lib) $(LIB_NAME).so ;)
+	@$(foreach lib,$(CC_OPENSSL_LIBS_FN), install_name_tool -change $(lib) $(CC_OPENSS_LIB_DIR)/$(lib) $(LIB_NAME).so ;)
+	@otool -L $(LIB_NAME).so
+else
+	@ldd $(LIB_NAME).so
+	@patchelf --set-rpath '/usr/local/casper/icu/lib/:/usr/local/casper/openssl/lib' $(LIB_NAME).so
+	@ldd $(LIB_NAME).so
+endif
 endif
 
 # info
