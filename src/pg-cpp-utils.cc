@@ -64,6 +64,16 @@ extern "C" {
     PG_FUNCTION_INFO_V1(pg_cpp_utils_info);
 } // extern "C"
 
+#define PG_CPP_UTILS_TEXT2STRING(a_text)[&]() -> std::string { \
+    std::string rv; \
+    char* tmp  = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(a_text))); \
+    if ( nullptr != tmp ) { \
+        rv = tmp; \
+        pfree(tmp); \
+    } \
+    return rv; \
+}()
+
 #if defined(DEBUG)
     #ifndef PG_CPP_UTILS_TOKEN
         #define PG_CPP_UTILS_TOKEN "pg_cpp_utils"
@@ -177,7 +187,7 @@ extern "C" {
         func_call_context = SRF_PERCALL_SETUP();
 
 #ifdef __APPLE__
-    #define CALL_CNTR_FMT PRIu32
+    #define CALL_CNTR_FMT "ld"
 #else
     #define CALL_CNTR_FMT PRIu64
 #endif
@@ -270,7 +280,11 @@ extern "C" {
         int     tmp_duration = PG_GETARG_INT32(1);
         text*   tmp_pkey_uri = PG_GETARG_TEXT_P(2);
 
-        PG_CPP_UTILS_LOG_DEBUG("%s,%d,%s", tmp_payload, tmp_duration, tmp_pkey_uri);
+#ifdef PG_CPP_UTILS_LOG_DEBUG
+        const std::string __tmp_payload  = PG_CPP_UTILS_TEXT2STRING(tmp_payload);
+        const std::string __tmp_pkey_uri = PG_CPP_UTILS_TEXT2STRING(tmp_pkey_uri);
+        PG_CPP_UTILS_LOG_DEBUG("%s,%d,%s", __tmp_payload.c_str(), tmp_duration, __tmp_pkey_uri.c_str());
+#endif
 
         if ( nullptr == tmp_payload ) {
             ereport(ERROR,

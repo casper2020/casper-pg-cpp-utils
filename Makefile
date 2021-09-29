@@ -77,67 +77,33 @@ PG_CONFIG                      ?= $(shell which pg_config)
 POSTGRESQL_HEADERS_DIR 	       := $(shell $(PG_CONFIG) --includedir-server)
 POSTGRESQL_HEADERS_OTHER_C_DIR := $(POSTGRESQL_HEADERS_DIR:server=)
 
-USE_CUSTOM_COMPILED_LIBS?=true
-
-CC_PACKAGER_DIR?=$(shell $(READLINK_CMD) -m ../casper-packager)
-CC_INSTALL_DIR:=/usr/local/casper
+PACKAGER_DIR?=$(shell $(READLINK_CMD) -m ../casper-packager)
+INSTALL_DIR:=/usr/local/casper
 
 # ICU
-CC_ICU_FULL_VERSION?=$(shell cat  $(CC_PACKAGER_DIR)/icu/version)
+ICU_FULL_VERSION?=$(shell cat  $(PACKAGER_DIR)/icu/version)
 ifeq (Darwin, $(PLATFORM))
-	CC_ICU_INSTALL_DIR?=$(CC_INSTALL_DIR)/icu/$(CC_ICU_FULL_VERSION)/$(TARGET)
+	ICU_INSTALL_DIR?=$(INSTALL_DIR)/icu/$(ICU_FULL_VERSION)/$(TARGET)
 else
-# CC_ICU_INSTALL_DIR?=$(CC_INSTALL_DIR)/icu/$(CC_ICU_FULL_VERSION)/$(TARGET)
-	$(error TODO CC_ICU_INSTALL_DIR)
+# ICU_INSTALL_DIR?=$(INSTALL_DIR)/icu/$(ICU_FULL_VERSION)/$(TARGET)
+	$(error TODO ICU_INSTALL_DIR)
 endif
-CC_ICU_INCLUDE_DIR?=$(shell $(READLINK_CMD) -m $(CC_ICU_INSTALL_DIR)/include)
-CC_ICU_LIB_DIR?=$(shell $(READLINK_CMD) -m $(CC_ICU_INSTALL_DIR)/lib)
-CC_ICU_VERSION?=$(shell cat  $(CC_PACKAGER_DIR)/icu/version | cut -d'-' -f1)
-
-CC_ICU_LIBS_FN=
-ifeq (true, $(USE_CUSTOM_COMPILED_LIBS))
-  ifeq (Darwin, $(PLATFORM))
-    CC_ICU_LIBS_FN=libicuuc.$(CC_ICU_VERSION).dylib libicui18n.$(CC_ICU_VERSION).dylib libicudata.$(CC_ICU_VERSION).dylib libicuio.$(CC_ICU_VERSION).dylib libicutu.$(CC_ICU_VERSION).dylib
-  endif
-endif
+ICU_INCLUDE_DIR?=$(shell $(READLINK_CMD) -m $(ICU_INSTALL_DIR)/include)
+ICU_LIB_DIR?=$(shell $(READLINK_CMD) -m $(ICU_INSTALL_DIR)/lib)
+ICU_VERSION?=$(shell cat  $(PACKAGER_DIR)/icu/version | cut -d'-' -f1)
+ICU_LIBS_FN=libicuuc.$(ICU_VERSION).dylib libicui18n.$(ICU_VERSION).dylib libicudata.$(ICU_VERSION).dylib libicuio.$(ICU_VERSION).dylib libicutu.$(ICU_VERSION).dylib
 
 # OPENSSL
-CC_OPENSSL_FULL_VERSION?=$(shell cat  $(CC_PACKAGER_DIR)/openssl/version)
-CC_OPENSSL_VERSION?=$(shell cat $(CC_PACKAGER_DIR)/openssl/version | tr -dc '0-9.' | cut -d'.' -f1-2)
+OPENSSL_FULL_VERSION?=$(shell cat  $(PACKAGER_DIR)/openssl/version)
+OPENSSL_VERSION?=$(shell cat $(PACKAGER_DIR)/openssl/version | tr -dc '0-9.' | cut -d'.' -f1-2)
 ifeq (Darwin, $(PLATFORM))
-	CC_OPENSSL_INSTALL_DIR?=$(CC_INSTALL_DIR)/openssl/$(CC_OPENSSL_FULL_VERSION)/$(TARGET)
+	OPENSSL_INSTALL_DIR?=$(INSTALL_DIR)/openssl/$(OPENSSL_FULL_VERSION)/$(TARGET)
 else
-	$(error TODO CC_OPENSSL_INSTALL_DIR)
+	$(error TODO OPENSSL_INSTALL_DIR)
 endif
-CC_OPENSS_INCLUDE_DIR?=$(shell $(READLINK_CMD) -m $(CC_OPENSSL_INSTALL_DIR)/include)
-CC_OPENSS_LIB_DIR?=$(shell $(READLINK_CMD) -m $(CC_OPENSSL_INSTALL_DIR)/lib)
-
-CC_OPENSSL_LIBS_FN=
-ifeq (true, $(USE_CUSTOM_COMPILED_LIBS))
-  ifeq (Darwin, $(PLATFORM))
-    CC_OPENSSL_LIBS_FN=libcrypto.$(CC_OPENSSL_VERSION).dylib libssl.$(CC_OPENSSL_VERSION).dylib
-  endif
-endif
-
-#
-ifeq (true, $(USE_CUSTOM_COMPILED_LIBS))
-  ICU_INCLUDE_DIR?=$(CC_ICU_INCLUDE_DIR)
-  ICU_LIB_DIR?=$(CC_ICU_LIB_DIR)
-  OPENSSL_INCLUDE_DIR?=$(CC_OPENSS_INCLUDE_DIR)
-  OPENSSL_LIB_DIR?=$(CC_OPENSS_LIB_DIR)
-endif
-
-# ifeq (Darwin, $(PLATFORM))
-#   ICU_INCLUDE_DIR?=/usr/local/opt/icu4c/include
-#   ICU_LIB_DIR?=/usr/local/opt/icu4c/lib
-#   OPENSSL_INCLUDE_DIR?=/usr/local/opt/openssl/include
-#   OPENSSL_LIB_DIR?=/usr/local/opt/openssl/lib
-# else
-#   ICU_INCLUDE_DIR?=/usr/include/unicode
-#   ICU_LIB_DIR?=usr/lib/x86_64-linux-gnu
-#   OPENSSL_INCLUDE_DIR?=/usr/include
-#   OPENSSL_LIB_DIR?=/usr/lib/x86_64-linux-gnu/
-# endif
+OPENSSL_INCLUDE_DIR?=$(shell $(READLINK_CMD) -m $(OPENSSL_INSTALL_DIR)/include)
+OPENSSL_LIB_DIR?=$(shell $(READLINK_CMD) -m $(OPENSSL_INSTALL_DIR)/lib)
+OPENSSL_LIBS_FN=libcrypto.$(OPENSSL_VERSION).dylib libssl.$(OPENSSL_VERSION).dylib
 
 #####################
 # SOURCE & INCLUDES
@@ -155,22 +121,32 @@ SRC := src/pg-cpp-utils.cc                \
 	src/pg/cpp/utils/number_formatter.cc  \
 	src/pg/cpp/utils/message_formatter.cc
 
-# [B] TODO: 
+############################
+# DEPENDENCIES
+############################
 
-OSAL_SRC_DIR      := $(shell $(READLINK_CMD) -m ../casper-osal/src )
-OSAL_LIB_DIR	    := /Users/ajdgomes/Work/casper/2.0/casper-packager/xcode/build/1300/Products/Debug
-OSAL_LINKER_FLAGS := -L $(OSAL_LIB_DIR) -lcasper-osal-icu
+OSAL_DIR          := $(shell $(READLINK_CMD) -m ../casper-osal)
+OSAL_SRC_DIR      := $(OSAL_DIR)/src
+OSAL_LIB_DIR	  := $(OSAL_DIR)/out/$(PLATFORM_LC)/$(TARGET)
+OSAL_LINKER_FLAGS := -L $(OSAL_LIB_DIR) -losal-icu
 
-CONNECTORS_SRC_DIR      := $(shell $(READLINK_CMD) -m ../casper-connectors/src )
-CONNECTORS_LIB_DIR	    := /Users/ajdgomes/Work/casper/2.0/casper-packager/xcode/build/1300/Products/Debug
-CONNECTORS_LINKER_FLAGS := -L $(CONNECTORS_LIB_DIR) -lcasper-connectors-icu
+CONNECTORS_DIR          := $(shell $(READLINK_CMD) -m ../casper-connectors)
+CONNECTORS_SRC_DIR      := $(CONNECTORS_DIR)/src
+CONNECTORS_LIB_DIR	    := $(CONNECTORS_DIR)/out/$(PLATFORM_LC)/$(TARGET)
+CONNECTORS_LINKER_FLAGS := -L $(CONNECTORS_LIB_DIR) -lconnectors-icu
 
 # jsoncpp
+JSONCPP_DIR          := $(PACKAGER_DIR)/jsoncpp
 JSONCPP_SRC_DIR      := $(shell $(READLINK_CMD) -m ../jsoncpp/dist )
-JSONCPP_LIB_DIR      := /Users/ajdgomes/Work/casper/2.0/casper-packager/xcode/build/1300/Products/Debug
+JSONCPP_LIB_DIR      := $(JSONCPP_DIR)/out/$(PLATFORM_LC)/$(TARGET)
 JSONCPP_LINKER_FLAGS := -L $(JSONCPP_LIB_DIR) -ljsoncpp
 
-# [E] TODO: 
+# cppcodec
+CPPCODEC_SRC_DIR      := $(shell $(READLINK_CMD) -m ../cppcodec )
+
+############################
+# OTHER
+############################
 
 OBJS := $(SRC:.cc=.o)
 
@@ -178,14 +154,14 @@ OBJS := $(SRC:.cc=.o)
 FPG_HEADERS_SEARCH_PATH := \
 	-I $(POSTGRESQL_HEADERS_DIR) 	      \
 	-I $(POSTGRESQL_HEADERS_OTHER_C_DIR)  \
-	-I $(shell $(READLINK_CMD) -m ./src ) \
-	-I $(CONNECTORS_SRC_DIR) \
-	-I $(OSAL_SRC_DIR) \
-	-I $(JSONCPP_SRC_DIR)
+	-I $(shell $(READLINK_CMD) -m ./src )
 
 FPG_HEADERS_SEARCH_PATH += -I $(ICU_INCLUDE_DIR)
-FPG_HEADERS_SEARCH_PATH += -I ../casper-osal/src -I ../cppcodec
 FPG_HEADERS_SEARCH_PATH += -I $(OPENSSL_INCLUDE_DIR)
+FPG_HEADERS_SEARCH_PATH += -I $(CONNECTORS_SRC_DIR) 
+FPG_HEADERS_SEARCH_PATH += -I $(OSAL_SRC_DIR)
+FPG_HEADERS_SEARCH_PATH += -I $(CPPCODEC_SRC_DIR)
+FPG_HEADERS_SEARCH_PATH += -I $(JSONCPP_SRC_DIR)
 
 PG_CPPFLAGS := $(FPG_HEADERS_SEARCH_PATH)
 
@@ -212,7 +188,7 @@ endif
 ############################
 LIB_NAME := pg-cpp-utils
 ifndef LIB_VERSION
-  LIB_VERSION := $(shell cat $(CC_PACKAGER_DIR)/pg-cpp-utils/version)
+  LIB_VERSION := $(shell cat $(PACKAGER_DIR)/pg-cpp-utils/version)
 endif
 LINKER_FLAGS =
 ifeq (Darwin, $(PLATFORM))
@@ -227,7 +203,6 @@ else
 endif
 
 LINKER_FLAGS += -lstdc++
-# LINKER_FLAGS += -Wl,-rpath,$(ICU_LIB_DIR),-rpath,$(OPENSSL_LIB_DIR)
 LINKER_FLAGS += -L$(OPENSSL_LIB_DIR) -lcrypto -lssl
 LINKER_FLAGS += -L$(ICU_LIB_DIR) -licuuc -licui18n -licudata -licuio -licutu
 LINKER_FLAGS += $(CONNECTORS_LINKER_FLAGS)
@@ -237,11 +212,10 @@ LINKER_FLAGS += $(OSAL_LINKER_FLAGS)
 ############################
 # EXPAND version.h
 ############################
-REL_VARIANT ?= 0
-REL_NAME    ?= $(LIB_NAME)
-REL_DATE    := $(shell date -u)
-REL_HASH    := $(shell git rev-parse HEAD)
-REL_BRANCH  := $(shell git rev-parse --abbrev-ref HEAD)
+REL_NAME   := $(LIB_NAME)
+REL_DATE   := $(shell date -u)
+REL_HASH   := $(shell git rev-parse HEAD)
+REL_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
 $(shell sed -e s#@VERSION@#${LIB_VERSION}#g pg-cpp-utils.control.tpl > pg-cpp-utils.control)
 $(shell cp -f src/pg/cpp/utils/versioning.h.tpl src/pg/cpp/utils/versioning.h )
@@ -304,18 +278,24 @@ clean_all:
 	@find . -name "$(LIB_NAME).so*" -delete
 	@find . -name "$(LIB_NAME).dylib*" -delete
 
+# dependencies
+deps:
+	@make -C $(OSAL_DIR) -f static-lib-makefile.mk ICU_STAND_ALONE_DEP_ON=true TARGET=$(TARGET) clean all
+	@make -C $(CONNECTORS_DIR) -f static-lib-makefile.mk ICU_STAND_ALONE_DEP_ON=true TARGET=$(TARGET) clean all
+	@make -C $(JSONCPP_DIR) -f static-lib-makefile.mk TARGET=$(TARGET) clean all
+
 # so
-so:
+so: deps
 	@echo "* $(PLATFORM) $(TARGET) rebuild..."
 	@make -f Makefile clean clean_all all
 
 # release
-release:
+release: deps
 	@echo "* $(PLATFORM) $(TARGET) rebuild..."
 	@make -f Makefile TARGET=release so
 
 # debug
-debug:
+debug: deps
 	@echo "* $(PLATFORM) $(TARGET) rebuild..."
 	@make -f Makefile TARGET=debug so
 
@@ -323,24 +303,27 @@ debug:
 dev:
 	@make -f Makefile TARGET=$(TARGET) so rpath install	
 
-#
+# rpath
 rpath:
-	@echo "* macOS [$(TARGET)] fix rpath..."
-ifeq (true, $(USE_CUSTOM_COMPILED_LIBS))
-	@echo "* CC_ICU_LIB_DIR=$(CC_ICU_LIB_DIR)"
-	@echo "\t $(CC_ICU_LIBS_FN)"
-	@echo "* CC_OPENSS_LIB_DIR=$(CC_OPENSS_LIB_DIR)"
-	@echo "\t $(CC_OPENSSL_LIBS_FN)"
+	@echo "* $(PLATFORM) [$(TARGET)] fix rpath ..."
+	@echo "+ ICU_LIB_DIR=$(ICU_LIB_DIR)"
+	@echo "+ OPENSSL_LIB_DIR=$(OPENSSL_LIB_DIR)"
 ifeq (Darwin, $(PLATFORM))
 	@otool -L $(LIB_NAME).so
-	@$(foreach lib,$(CC_ICU_LIBS_FN), install_name_tool -change $(lib) $(CC_ICU_LIB_DIR)/$(lib) $(LIB_NAME).so ;)
-	@$(foreach lib,$(CC_OPENSSL_LIBS_FN), install_name_tool -change $(lib) $(CC_OPENSS_LIB_DIR)/$(lib) $(LIB_NAME).so ;)
+	@$(foreach lib,$(ICU_LIBS_FN), install_name_tool -change $(lib) $(ICU_LIB_DIR)/$(lib) $(LIB_NAME).so ;)
+	@$(foreach lib,$(ICU_LIBS_FN), \
+		declare -a ICU_LIBS_FN=($(ICU_LIBS_FN)) ;\
+		for l2 in $${ICU_LIBS_FN[@]} ; do \
+			echo "\t\t⌥ $${l2} vs $(lib)" ; \
+			install_name_tool -change $${l2} $(ICU_LIB_DIR)/$${l2} $(ICU_LIB_DIR)/$(lib) ; \
+		done \
+	;)
+	@$(foreach lib,$(OPENSSL_LIBS_FN), install_name_tool -change $(lib) $(OPENSSL_LIB_DIR)/$(lib) $(LIB_NAME).so ;)
 	@otool -L $(LIB_NAME).so
 else
 	@ldd $(LIB_NAME).so
 	@patchelf --set-rpath '/usr/local/casper/icu/lib/:/usr/local/casper/openssl/lib' $(LIB_NAME).so
 	@ldd $(LIB_NAME).so
-endif
 endif
 
 # info
