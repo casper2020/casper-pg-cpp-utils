@@ -1,5 +1,5 @@
 /**
- * @file public_link.h
+ * @file info.h
  *
  * Copyright (c) 2011-2018 Cloudware S.A. All rights reserved.
  *
@@ -20,16 +20,12 @@
  */
 
 #pragma once
-#ifndef PG_CPP_UTILS_PUBLIC_LINK_H_
-#define PG_CPP_UTILS_PUBLIC_LINK_H_
+#ifndef PG_CPP_UTILS_INFO_H_
+#define PG_CPP_UTILS_INFO_H_
 
 #include "pg/cpp/utils/utility.h"
 
-#include <string>     // std::string
-#include <sstream>    // std::stringstream
-#include <functional> // std::function
-
-#include "json/json.h"
+#include <string>
 
 namespace pg
 {
@@ -40,33 +36,43 @@ namespace pg
         namespace utils
         {
 
-            class PublicLink final : public Utility
+            class Info final : public Utility
             {
 
             public: // Data Type(s)
 
-                class Record final : public Utility::Record
+                 class Record final : public Utility::Record
                 {
 
                 public: // Const Data
 
-                    const std::string url_;
+                    const std::string version_;
+                    const std::string target_;
+                    const std::string date_;
+                    const std::string repo_;
+                    const std::string dependencies_;
 
                 private: // Data
 
                     char** p_string_values_;
+                    size_t n_strings_;
 
                 public: // Constructor / Destructor
 
                     /**
                      * @brief Default constructor.
                      *
-                     * @param a_url
+                     * @param a_version
+                     * @param a_target
+                     * @param a_date
+                     * @param a_repo
                      */
-                    Record (const std::string& a_url)
-                        : url_(a_url)
+                    Record (const std::string& a_version, const std::string& a_target, const std::string& a_date, const std::string a_repo,
+                            const std::string& a_dependencies)
+                    : version_(a_version), target_(a_target), date_(a_date), repo_(a_repo), dependencies_(a_dependencies)
                     {
                         p_string_values_ = nullptr;
+                        n_strings_       = 0;
                     }
 
                     /**
@@ -75,8 +81,10 @@ namespace pg
                     virtual ~Record ()
                     {
                         if ( nullptr != p_string_values_ ) {
-                            if ( nullptr != p_string_values_[0] ) {
-                                pfree(p_string_values_[0]);
+                            for ( auto idx = 0 ; idx < n_strings_ ; ++idx ) {
+                                if ( nullptr != p_string_values_[idx] ) {
+                                    pfree(p_string_values_[idx]);
+                                }
                             }
                             pfree(p_string_values_);
                         }
@@ -91,33 +99,27 @@ namespace pg
                      */
                     virtual char** PStringValues ()
                     {
-                        char** tmp = (char**)palloc(sizeof(char*)*1);
+                        n_strings_ = 5;
+                        char** tmp = (char**)palloc(sizeof(char*)*n_strings_);
                         if ( nullptr == tmp ) {
                             return nullptr;
                         }
 
-                        tmp[0] = PCopyString(url_.c_str());
+                        tmp[0] = PCopyString(version_.c_str());
+                        tmp[1] = PCopyString(target_.c_str());
+                        tmp[2] = PCopyString(date_.c_str());
+                        tmp[3] = PCopyString(repo_.c_str());
+                        tmp[4] = PCopyString(dependencies_.c_str());
 
                         return tmp;
                     }
 
                 }; // end of 'Record' class
 
-            private: // Const Data
-
-                const std::string key_;
-                const std::string iv_;
-
-            private: // Data
-
-                std::string          url_;
-                std::stringstream    tmp_ss_;
-                Json::FastWriter     fast_writer_;
-
             public: // Constructor / Destructor.
 
-                PublicLink (const std::string& a_key, const std::string& a_iv);
-                virtual ~PublicLink();
+                Info ();
+                virtual ~Info();
 
             public: // Inherited Pure Virtual Method(s) / Function(s)
 
@@ -125,15 +127,14 @@ namespace pg
 
             public: // Method(s) / Function(s)
 
-                void Calculate (const std::string& a_base_url,
-                                const int64_t a_company_id, const std::string& a_entity_type, const int64_t a_entity_id);
+                void Calculate (const std::string& a_payload);
 
-            }; // end of class 'PublicLink'
+            }; // end of class 'InvoiceHash'
 
         } // end of namespace 'utils'
 
     } // end of namespace 'cpp'
 
-} // end of namespace pg
+} // end of namespace 'pg'
 
-#endif // PG_CPP_UTILS_PUBLIC_LINK_H_
+#endif // PG_CPP_UTILS_INFO_H_

@@ -7,6 +7,7 @@ C++ PostgreSQL extension module - utility functions
 ICU4C
 postgresql-dev
 JsonCpp
+OpenSSL
 ```
 
 # Build
@@ -23,6 +24,8 @@ make install
 # SQL - INSTALL
 ```sql
 CREATE TYPE pg_cpp_utils_version_record AS (version text);
+CREATE TYPE pg_cpp_utils_info_record AS (version text, target text, date text, repo text, dependencies text);
+CREATE TYPE pg_cpp_utils_jwt_record AS (jwt text);
 CREATE TYPE pg_cpp_utils_hash_record AS (long_hash text, short_hash text);
 CREATE TYPE pg_cpp_utils_public_link_record AS (url text);
 CREATE TYPE pg_cpp_utils_number_spellout_record AS (spellout text);
@@ -31,6 +34,15 @@ CREATE TYPE pg_cpp_utils_format_message_record AS (formatted text);
 
 CREATE OR REPLACE FUNCTION pg_cpp_utils_version (  
 ) RETURNS pg_cpp_utils_version_record AS '$libdir/pg-cpp-utils.so', 'pg_cpp_utils_version' LANGUAGE C STRICT;
+
+CREATE OR REPLACE FUNCTION pg_cpp_utils_info (  
+) RETURNS pg_cpp_utils_info_record AS '$libdir/pg-cpp-utils.so', 'pg_cpp_utils_info' LANGUAGE C STRICT;
+
+CREATE OR REPLACE FUNCTION pg_cpp_utils_make_jwt (
+  a_payload text,
+  a_duration integer,
+  a_pkey_uri text
+) RETURNS pg_cpp_utils_jwt_record AS '$libdir/pg-cpp-utils.so', 'pg_cpp_utils_make_jwt' LANGUAGE C STRICT;
 
 CREATE OR REPLACE FUNCTION pg_cpp_utils_invoice_hash (
   a_pem_uri text,

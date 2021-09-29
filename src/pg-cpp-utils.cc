@@ -31,7 +31,9 @@ extern "C" {
 #include <string>
 
 #include "pg/cpp/utils/version.h"
+#include "pg/cpp/utils/info.h"
 #include "pg/cpp/utils/exception.h"
+#include "pg/cpp/utils/jwt.h"
 #include "pg/cpp/utils/invoice_hash.h"
 #include "pg/cpp/utils/public_link.h"
 #include "pg/cpp/utils/number_spellout.h"
@@ -41,11 +43,17 @@ extern "C" {
 #include <unicode/utypes.h> // u_init
 #include <unicode/uclean.h> // u_cleanup
 
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
 extern "C" {
-    PG_MODULE_MAGIC;
+    PG_MODULE_MAGIC;    
+    Datum pg_cpp_utils_make_jwt(PG_FUNCTION_ARGS);
     Datum pg_cpp_utils_invoice_hash(PG_FUNCTION_ARGS);
     Datum pg_cpp_utils_number_spellout(PG_FUNCTION_ARGS);
     Datum pg_cpp_utils_version(PG_FUNCTION_ARGS);
+    Datum pg_cpp_utils_info(PG_FUNCTION_ARGS);
+    PG_FUNCTION_INFO_V1(pg_cpp_utils_make_jwt);
     PG_FUNCTION_INFO_V1(pg_cpp_utils_invoice_hash);
     PG_FUNCTION_INFO_V1(pg_cpp_utils_public_link);
     PG_FUNCTION_INFO_V1(pg_cpp_utils_number_spellout);
@@ -53,6 +61,7 @@ extern "C" {
     PG_FUNCTION_INFO_V1(pg_cpp_utils_format_number);
     PG_FUNCTION_INFO_V1(pg_cpp_utils_format_message);
     PG_FUNCTION_INFO_V1(pg_cpp_utils_version);
+    PG_FUNCTION_INFO_V1(pg_cpp_utils_info);
 } // extern "C"
 
 #if defined(DEBUG)
@@ -96,6 +105,20 @@ extern "C" {
         FuncCallContext* func_call_context;
 
         if ( SRF_IS_FIRSTCALL() ) {
+
+#if OPENSSL_VERSION_NUMBER < 0x1010000fL
+            OPENSSL_config(NULL);
+            SSL_library_init();
+            SSL_load_error_strings();
+            OpenSSL_add_all_algorithms();
+#else
+            if ( 0 == OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, NULL) ) {
+                // ... report error ....
+                ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED), errmsg("%s", "Unable to initialize openssl!")));
+            }
+            /*  OPENSSL_init_ssl() may leave errors in the error queue while returning success */
+            ERR_clear_error();
+#endif
 
             // ... create a function context for cross-call persistence ...
             func_call_context = SRF_FIRSTCALL_INIT();
@@ -197,6 +220,97 @@ extern "C" {
             SRF_RETURN_DONE(func_call_context);
         }
 
+    }
+
+    /**
+     * @brief pg-cpp-utils JWT interface to PostreSQL
+     */
+    Datum pg_cpp_utils_make_jwt (PG_FUNCTION_ARGS)
+    {
+        // ... test the number of arguments ...
+        const size_t args_count = PG_NARGS();
+        if ( 3 != args_count ) {
+            ereport(ERROR,
+                    (
+                     errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("pg_cpp_utils_make_jwt(...) - received %zd argument(s), expected at least %d argument(s)!", args_count, 6)
+                    )
+            );
+        }
+
+        if ( PG_ARGISNULL(0) ) {
+            ereport(ERROR,
+                    (
+                     errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("pg_cpp_utils_make_jwt(...) - payload argument can not be null!")
+                     )
+            );
+        }
+
+        if ( PG_ARGISNULL(1) ) {
+            ereport(ERROR,
+                    (
+                     errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("pg_cpp_utils_make_jwt(...) - duration id argument can not be null!")
+                     )
+            );
+        }
+
+        if ( PG_ARGISNULL(2) ) {
+            ereport(ERROR,
+                    (
+                     errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("pg_cpp_utils_make_jwt(...) - private key uri argument can not be null!")
+                    )
+            );
+        }
+
+        // ... collect param(s) ...
+        text*   tmp_payload  = PG_GETARG_TEXT_P(0);
+        int     tmp_duration = PG_GETARG_INT32(1);
+        text*   tmp_pkey_uri = PG_GETARG_TEXT_P(2);
+
+        PG_CPP_UTILS_LOG_DEBUG("%s,%d,%s", tmp_payload, tmp_duration, tmp_pkey_uri);
+
+        if ( nullptr == tmp_payload ) {
+            ereport(ERROR,
+                    (
+                     errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("pg_cpp_utils_make_jwt(...) - b) payload argument can not be null!")
+                    )
+            );
+        }
+
+        if ( nullptr == tmp_pkey_uri ) {
+            ereport(ERROR,
+                    (
+                     errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("pg_cpp_utils_make_jwt(...) - b) private key uri argument can not be null!")
+                    )
+            );
+        }    
+
+        const std::string payload   = std::string(VARDATA(tmp_payload), VARSIZE(tmp_payload) - VARHDRSZ);
+        const uint64_t     duration = static_cast<uint64_t>(tmp_duration);
+        const std::string pkey_uri  = std::string(VARDATA(tmp_pkey_uri), VARSIZE(tmp_pkey_uri) - VARHDRSZ);
+
+        // ... perform request ...
+        return pg_cpp_utils_utils_common(fcinfo,
+                                         /* allocation */
+                                         [&pkey_uri] () -> pg::cpp::utils::Utility* {
+                                             return new pg::cpp::utils::JWT(pkey_uri);
+                                         },
+                                         /* execute */
+                                         [&payload, &duration] (pg::cpp::utils::Utility* a_utility) -> void {
+                                             // ... perform ...
+                                             static_cast<pg::cpp::utils::JWT*>(a_utility)->Encode(duration, payload);
+                                         },
+                                         /* dealloc */
+                                         [] (pg::cpp::utils::Utility* a_utility) -> pg::cpp::utils::Utility* {
+                                             delete a_utility;
+                                             return nullptr;
+                                         }
+        );
     }
 
     /**
@@ -700,6 +814,30 @@ extern "C" {
                                          /* allocation */
                                          [] () -> pg::cpp::utils::Utility* {
                                              return new pg::cpp::utils::Version();
+                                         },
+                                         /* execute */
+                                         [] (pg::cpp::utils::Utility* a_utility) -> void {
+                                             // ... nothing to do ...
+                                         },
+                                         /* dealloc */
+                                         [] (pg::cpp::utils::Utility* a_utility) -> pg::cpp::utils::Utility* {
+                                             delete a_utility;
+                                             return nullptr;
+                                         }
+        );
+
+    }
+
+    /**
+     * @brief pg-cpp-utils info output.
+     */
+    Datum pg_cpp_utils_info (PG_FUNCTION_ARGS)
+    {
+        // ... perform request ...
+        return pg_cpp_utils_utils_common(fcinfo,
+                                         /* allocation */
+                                         [] () -> pg::cpp::utils::Utility* {
+                                             return new pg::cpp::utils::Info();
                                          },
                                          /* execute */
                                          [] (pg::cpp::utils::Utility* a_utility) -> void {

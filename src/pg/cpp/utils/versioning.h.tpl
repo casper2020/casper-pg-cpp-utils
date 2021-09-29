@@ -23,6 +23,32 @@
 #ifndef PG_CPP_UTILS_VERSIONING_H_
 #define PG_CPP_UTILS_VERSIONING_H_
 
-#define PG_CPP_UTILS_VERSION "x.x.xx"
+#ifndef PG_CPP_UTILS_NAME
+#define PG_CPP_UTILS_NAME "pg-cpp-utils@b.n.s@"
+#endif
+
+#ifndef PG_CPP_UTILS_TARGET
+#define PG_CPP_UTILS_TARGET "t.t.t"
+#endif
+
+#ifndef PG_CPP_UTILS_VERSION
+#define PG_CPP_UTILS_VERSION "x.x.x"
+#endif
+
+#ifndef PG_CPP_UTILS_REL_DATE
+#define PG_CPP_UTILS_REL_DATE "r.r.d"
+#endif
+
+#ifndef PG_CPP_UTILS_REL_BRANCH
+#define PG_CPP_UTILS_REL_BRANCH "r.r.b"
+#endif
+
+#ifndef PG_CPP_UTILS_REL_HASH
+#define PG_CPP_UTILS_REL_HASH "r.r.h"
+#endif
+
+#ifndef PG_CPP_UTILS_INFO
+#define PG_CPP_UTILS_INFO PG_CPP_UTILS_NAME " v" PG_CPP_UTILS_VERSION
+#endif
 
 #endif // PG_CPP_UTILS_VERSIONING_H_

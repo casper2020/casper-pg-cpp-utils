@@ -1,5 +1,5 @@
 /**
- * @file public_link.h
+ * @file jwt.h
  *
  * Copyright (c) 2011-2018 Cloudware S.A. All rights reserved.
  *
@@ -20,16 +20,16 @@
  */
 
 #pragma once
-#ifndef PG_CPP_UTILS_PUBLIC_LINK_H_
-#define PG_CPP_UTILS_PUBLIC_LINK_H_
+#ifndef PG_CPP_UTILS_JWT_H_
+#define PG_CPP_UTILS_JWT_H_
 
 #include "pg/cpp/utils/utility.h"
+
+#include "cc/auth/jwt.h"
 
 #include <string>     // std::string
 #include <sstream>    // std::stringstream
 #include <functional> // std::function
-
-#include "json/json.h"
 
 namespace pg
 {
@@ -40,7 +40,7 @@ namespace pg
         namespace utils
         {
 
-            class PublicLink final : public Utility
+            class JWT final : public Utility
             {
 
             public: // Data Type(s)
@@ -50,7 +50,7 @@ namespace pg
 
                 public: // Const Data
 
-                    const std::string url_;
+                    const std::string payload_;
 
                 private: // Data
 
@@ -64,7 +64,7 @@ namespace pg
                      * @param a_url
                      */
                     Record (const std::string& a_url)
-                        : url_(a_url)
+                        : payload_(a_url)
                     {
                         p_string_values_ = nullptr;
                     }
@@ -96,7 +96,7 @@ namespace pg
                             return nullptr;
                         }
 
-                        tmp[0] = PCopyString(url_.c_str());
+                        tmp[0] = PCopyString(payload_.c_str());
 
                         return tmp;
                     }
@@ -105,19 +105,20 @@ namespace pg
 
             private: // Const Data
 
-                const std::string key_;
-                const std::string iv_;
+                const std::string    pkey_uri_;
+
+            private: // Helper(s)
+
+                ::cc::auth::JWT     jwt_;
 
             private: // Data
 
-                std::string          url_;
-                std::stringstream    tmp_ss_;
-                Json::FastWriter     fast_writer_;
+                std::string          payload_;
 
             public: // Constructor / Destructor.
 
-                PublicLink (const std::string& a_key, const std::string& a_iv);
-                virtual ~PublicLink();
+                JWT (const std::string& a_pkey_uri);
+                virtual ~JWT();
 
             public: // Inherited Pure Virtual Method(s) / Function(s)
 
@@ -125,10 +126,9 @@ namespace pg
 
             public: // Method(s) / Function(s)
 
-                void Calculate (const std::string& a_base_url,
-                                const int64_t a_company_id, const std::string& a_entity_type, const int64_t a_entity_id);
+                void Encode (const uint64_t& a_duration, const std::string& a_payload);
 
-            }; // end of class 'PublicLink'
+            }; // end of class 'JWT'
 
         } // end of namespace 'utils'
 
@@ -136,4 +136,4 @@ namespace pg
 
 } // end of namespace pg
 
-#endif // PG_CPP_UTILS_PUBLIC_LINK_H_
+#endif // PG_CPP_UTILS_JWT_H_

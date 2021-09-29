@@ -118,7 +118,7 @@ void pg::cpp::utils::PublicLink::Calculate (const std::string& a_base_url,
         osal::Time::HumanReadableTime hr_time;
         osal::Time::GetHumanReadableLocalTimeFrom(hr_time);
 
-        pg::Json::Value object = pg::Json::Value(pg::Json::ValueType::objectValue);
+        Json::Value object    = Json::Value(Json::ValueType::objectValue);
         object["timestamp"]   = osal::Time::ToHumanReadableTimeISO8601WithTZ(hr_time);
         object["company_id"]  = a_company_id;
         object["entity_type"] = a_entity_type;
@@ -248,7 +248,7 @@ void pg::cpp::utils::PublicLink::Calculate (const std::string& a_base_url,
             delete [] iv;
         }
         throw a_pg_cpp_utils_exception;
-    } catch (const pg::Json::Exception& a_json_exception) {
+    } catch (const Json::Exception& a_json_exception) {
         if ( nullptr != out ) {
             delete [] out;
         }
