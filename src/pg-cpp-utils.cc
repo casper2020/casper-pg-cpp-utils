@@ -64,6 +64,21 @@ extern "C" {
     PG_FUNCTION_INFO_V1(pg_cpp_utils_info);
 } // extern "C"
 
+// Initialize ICU.
+// Use of this function is optional. - from IUC4C documentation
+#if 1
+    #define ICU_INIT()
+#else
+    #define ICU_INIT() \
+    UErrorCode icu_error_code = UErrorCode::U_ZERO_ERROR; \
+    u_init(&icu_error_code); \
+    if ( UErrorCode::U_ZERO_ERROR != icu_error_code ) { \
+        throw PG_CPP_UTILS_EXCEPTION("ICU initialization error code %d - %s", icu_error_code, u_errorName(icu_error_code)); \
+    }
+#endif
+
+#define ICU_CLEANUP() u_cleanup()
+
 #define PG_CPP_UTILS_TEXT2STRING(a_text)[&]() -> std::string { \
     std::string rv; \
     char* tmp  = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(a_text))); \
@@ -529,12 +544,8 @@ extern "C" {
         return pg_cpp_utils_utils_common(fcinfo,
                                          /* allocation */
                                          [&locale, &spellout_override] () -> pg::cpp::utils::Utility* {
-                                             UErrorCode icu_error_code = UErrorCode::U_ZERO_ERROR;
-                                             u_init(&icu_error_code);
-                                             if ( UErrorCode::U_ZERO_ERROR != icu_error_code ) {
-                                                 throw PG_CPP_UTILS_EXCEPTION("ICU initialization error code %d", icu_error_code);
-                                             }
-                                             return new pg::cpp::utils::NumberSpellout(locale, spellout_override);
+                                            ICU_INIT();
+                                            return new pg::cpp::utils::NumberSpellout(locale, spellout_override);
                                          },
                                          /* execute */
                                          [&number] (pg::cpp::utils::Utility* a_utility) -> void {
@@ -544,7 +555,7 @@ extern "C" {
                                          /* dealloc */
                                          [] (pg::cpp::utils::Utility* a_utility) -> pg::cpp::utils::Utility* {
                                              delete a_utility;
-                                             u_cleanup();
+                                             ICU_CLEANUP();
                                              return nullptr;
                                          }
         );
@@ -600,12 +611,8 @@ extern "C" {
         return pg_cpp_utils_utils_common(fcinfo,
                                          /* allocation */
                                          [&locale, &spellout_override] () -> pg::cpp::utils::Utility* {
-                                             UErrorCode icu_error_code = UErrorCode::U_ZERO_ERROR;
-                                             u_init(&icu_error_code);
-                                             if ( UErrorCode::U_ZERO_ERROR != icu_error_code ) {
-                                                 throw PG_CPP_UTILS_EXCEPTION("ICU initialization error code %d", icu_error_code);
-                                             }
-                                             return new pg::cpp::utils::NumberSpellout(locale, spellout_override);
+                                            ICU_INIT()
+                                            return new pg::cpp::utils::NumberSpellout(locale, spellout_override);
                                          },
                                          /* execute */
                                          [&major, &major_singular, &major_plural, &minor, &minor_singular, &minor_plural, &format] (pg::cpp::utils::Utility* a_utility) -> void {
@@ -618,7 +625,7 @@ extern "C" {
                                          /* dealloc */
                                          [] (pg::cpp::utils::Utility* a_utility) -> pg::cpp::utils::Utility* {
                                              delete a_utility;
-                                             u_cleanup();
+                                             ICU_CLEANUP();
                                              return nullptr;
                                          }
         );
@@ -681,12 +688,8 @@ extern "C" {
         return pg_cpp_utils_utils_common(fcinfo,
                                          /* allocation */
                                          [&locale] () -> pg::cpp::utils::Utility* {
-                                             UErrorCode icu_error_code = UErrorCode::U_ZERO_ERROR;
-                                             u_init(&icu_error_code);
-                                             if ( UErrorCode::U_ZERO_ERROR != icu_error_code ) {
-                                                 throw PG_CPP_UTILS_EXCEPTION("ICU initialization error code %d", icu_error_code);
-                                             }
-                                             return new pg::cpp::utils::NumberFormatter(locale);
+                                            ICU_INIT()
+                                            return new pg::cpp::utils::NumberFormatter(locale);
                                          },
                                          /* execute */
                                          [&value, &pattern] (pg::cpp::utils::Utility* a_utility) -> void {
@@ -696,7 +699,7 @@ extern "C" {
                                          /* dealloc */
                                          [] (pg::cpp::utils::Utility* a_utility) -> pg::cpp::utils::Utility* {
                                              delete a_utility;
-                                             u_cleanup();
+                                             ICU_CLEANUP();
                                              return nullptr;
                                          }
         );
@@ -797,12 +800,8 @@ extern "C" {
         return pg_cpp_utils_utils_common(fcinfo,
                                          /* allocation */
                                          [&locale] () -> pg::cpp::utils::Utility* {
-                                             UErrorCode icu_error_code = UErrorCode::U_ZERO_ERROR;
-                                             u_init(&icu_error_code);
-                                             if ( UErrorCode::U_ZERO_ERROR != icu_error_code ) {
-                                                 throw PG_CPP_UTILS_EXCEPTION("ICU initialization error code %d", icu_error_code);
-                                             }
-                                             return new pg::cpp::utils::MessageFormatter(locale);
+                                            ICU_INIT();
+                                            return new pg::cpp::utils::MessageFormatter(locale);
                                          },
                                          /* execute */
                                          [&format, &args] (pg::cpp::utils::Utility* a_utility) -> void {
@@ -812,7 +811,7 @@ extern "C" {
                                          /* dealloc */
                                          [] (pg::cpp::utils::Utility* a_utility) -> pg::cpp::utils::Utility* {
                                              delete a_utility;
-                                             u_cleanup();
+                                             ICU_CLEANUP();
                                              return nullptr;
                                          }
         );

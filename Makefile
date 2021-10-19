@@ -318,6 +318,7 @@ ifeq (Darwin, $(PLATFORM))
 		done \
 	;)
 	@$(foreach lib,$(OPENSSL_LIBS_FN), install_name_tool -change $(lib) $(OPENSSL_LIB_DIR)/$(lib) $(LIB_NAME).so ;)
+	@install_name_tool -add_rpath $(ICU_LIB_DIR) $(LIB_NAME).so
 	@otool -L $(LIB_NAME).so
 else
 	@ldd $(LIB_NAME).so
