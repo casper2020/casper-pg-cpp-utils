@@ -126,19 +126,22 @@ SRC := src/pg-cpp-utils.cc                \
 
 OSAL_DIR          := $(shell $(READLINK_CMD) -m ../casper-osal)
 OSAL_SRC_DIR      := $(OSAL_DIR)/src
-OSAL_LIB_DIR	  := $(OSAL_DIR)/out/$(PLATFORM_LC)/$(TARGET)
-OSAL_LINKER_FLAGS := -L $(OSAL_LIB_DIR) -losal-icu
+OSAL_LIB_DIR      ?= $(OSAL_DIR)/out/$(PLATFORM_LC)/$(TARGET)
+OSAL_LIB          ?= osal-icu
+OSAL_LINKER_FLAGS := -L $(OSAL_LIB_DIR) -l$(OSAL_LIB)
 
 CONNECTORS_DIR          := $(shell $(READLINK_CMD) -m ../casper-connectors)
 CONNECTORS_SRC_DIR      := $(CONNECTORS_DIR)/src
-CONNECTORS_LIB_DIR	    := $(CONNECTORS_DIR)/out/$(PLATFORM_LC)/$(TARGET)
-CONNECTORS_LINKER_FLAGS := -L $(CONNECTORS_LIB_DIR) -lconnectors-icu
+CONNECTORS_LIB_DIR      ?= $(CONNECTORS_DIR)/out/$(PLATFORM_LC)/$(TARGET)
+CONNECTORS_LIB          ?= connectors-icu
+CONNECTORS_LINKER_FLAGS := -L $(CONNECTORS_LIB_DIR) -l$(CONNECTORS_LIB)
 
 # jsoncpp
 JSONCPP_DIR          := $(PACKAGER_DIR)/jsoncpp
 JSONCPP_SRC_DIR      := $(shell $(READLINK_CMD) -m ../jsoncpp/dist )
-JSONCPP_LIB_DIR      := $(JSONCPP_DIR)/out/$(PLATFORM_LC)/$(TARGET)
-JSONCPP_LINKER_FLAGS := -L $(JSONCPP_LIB_DIR) -ljsoncpp
+JSONCPP_LIB_DIR      ?= $(JSONCPP_DIR)/out/$(PLATFORM_LC)/$(TARGET)
+JSONCPP_LIB          ?= jsoncpp
+JSONCPP_LINKER_FLAGS := -L $(JSONCPP_LIB_DIR) -l$(JSONCPP_LIB)
 
 # cppcodec
 CPPCODEC_SRC_DIR      := $(shell $(READLINK_CMD) -m ../cppcodec )
@@ -318,7 +321,6 @@ ifeq (Darwin, $(PLATFORM))
 		done \
 	;)
 	@$(foreach lib,$(OPENSSL_LIBS_FN), install_name_tool -change $(lib) $(OPENSSL_LIB_DIR)/$(lib) $(LIB_NAME).so ;)
-	@install_name_tool -add_rpath $(ICU_LIB_DIR) $(LIB_NAME).so
 	@otool -L $(LIB_NAME).so
 else
 	@ldd $(LIB_NAME).so
