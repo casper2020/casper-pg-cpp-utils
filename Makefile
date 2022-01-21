@@ -324,7 +324,7 @@ ifeq (Darwin, $(PLATFORM))
 	@otool -L $(LIB_NAME).so
 else
 	@ldd $(LIB_NAME).so
-	@patchelf --set-rpath '/usr/local/casper/icu/lib/:/usr/local/casper/openssl/lib' $(LIB_NAME).so
+	@patchelf --set-rpath '$(ICU_LIB_DIR)/:$(OPENSSL_LIB_DIR)' $(LIB_NAME).so
 	@ldd $(LIB_NAME).so
 endif
 
