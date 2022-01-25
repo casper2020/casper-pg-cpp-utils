@@ -103,10 +103,6 @@ namespace pg
 
                 }; // end of 'Record' class
 
-            private: // Const Data
-
-                const std::string    pkey_uri_;
-
             private: // Helper(s)
 
                 ::cc::auth::JWT     jwt_;
@@ -117,7 +113,7 @@ namespace pg
 
             public: // Constructor / Destructor.
 
-                JWT (const std::string& a_pkey_uri);
+                JWT ();
                 virtual ~JWT();
 
             public: // Inherited Pure Virtual Method(s) / Function(s)
@@ -126,7 +122,8 @@ namespace pg
 
             public: // Method(s) / Function(s)
 
-                void Encode (const uint64_t& a_duration, const std::string& a_payload);
+                void Encode (const uint64_t& a_duration, const std::string& a_payload, const std::string& a_pkey_uri);
+                void Slashy (const std::string& a_base_url, const std::string& a_jwt);
 
             }; // end of class 'JWT'
 

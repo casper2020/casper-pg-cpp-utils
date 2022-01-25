@@ -49,11 +49,13 @@ extern "C" {
 extern "C" {
     PG_MODULE_MAGIC;    
     Datum pg_cpp_utils_make_jwt(PG_FUNCTION_ARGS);
+    Datum pg_cpp_utils_make_slashy_jwt_link(PG_FUNCTION_ARGS);
     Datum pg_cpp_utils_invoice_hash(PG_FUNCTION_ARGS);
     Datum pg_cpp_utils_number_spellout(PG_FUNCTION_ARGS);
     Datum pg_cpp_utils_version(PG_FUNCTION_ARGS);
     Datum pg_cpp_utils_info(PG_FUNCTION_ARGS);
     PG_FUNCTION_INFO_V1(pg_cpp_utils_make_jwt);
+    PG_FUNCTION_INFO_V1(pg_cpp_utils_make_slashy_jwt_link);
     PG_FUNCTION_INFO_V1(pg_cpp_utils_invoice_hash);
     PG_FUNCTION_INFO_V1(pg_cpp_utils_public_link);
     PG_FUNCTION_INFO_V1(pg_cpp_utils_number_spellout);
@@ -258,7 +260,7 @@ extern "C" {
             ereport(ERROR,
                     (
                      errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                     errmsg("pg_cpp_utils_make_jwt(...) - received %zd argument(s), expected at least %d argument(s)!", args_count, 6)
+                     errmsg("pg_cpp_utils_make_jwt(...) - received %zd argument(s), expected at least %d argument(s)!", args_count, 3)
                     )
             );
         }
@@ -326,13 +328,97 @@ extern "C" {
         // ... perform request ...
         return pg_cpp_utils_utils_common(fcinfo,
                                          /* allocation */
-                                         [&pkey_uri] () -> pg::cpp::utils::Utility* {
-                                             return new pg::cpp::utils::JWT(pkey_uri);
+                                         [] () -> pg::cpp::utils::Utility* {
+                                             return new pg::cpp::utils::JWT();
                                          },
                                          /* execute */
-                                         [&payload, &duration] (pg::cpp::utils::Utility* a_utility) -> void {
+                                         [&pkey_uri, &payload, &duration] (pg::cpp::utils::Utility* a_utility) -> void {
                                              // ... perform ...
-                                             static_cast<pg::cpp::utils::JWT*>(a_utility)->Encode(duration, payload);
+                                             static_cast<pg::cpp::utils::JWT*>(a_utility)->Encode(duration, payload, pkey_uri);
+                                         },
+                                         /* dealloc */
+                                         [] (pg::cpp::utils::Utility* a_utility) -> pg::cpp::utils::Utility* {
+                                             delete a_utility;
+                                             return nullptr;
+                                         }
+        );
+    }
+
+    /**
+     * @brief pg-cpp-utils Slashy JWT link interface to PostreSQL
+     */
+    Datum pg_cpp_utils_make_slashy_jwt_link (PG_FUNCTION_ARGS)
+    {
+        // ... test the number of arguments ...
+        const size_t args_count = PG_NARGS();
+        if ( 2 != args_count ) {
+            ereport(ERROR,
+                    (
+                     errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("pg_cpp_utils_make_slashy_jwt_link(...) - received %zd argument(s), expected at least %d argument(s)!", args_count, 2)
+                    )
+            );
+        }
+
+        if ( PG_ARGISNULL(0) ) {
+            ereport(ERROR,
+                    (
+                     errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("pg_cpp_utils_make_slashy_jwt_link(...) - base URL argument can not be null!")
+                     )
+            );
+        }
+
+        if ( PG_ARGISNULL(1) ) {
+            ereport(ERROR,
+                    (
+                     errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("pg_cpp_utils_make_slashy_jwt_link(...) - JWT argument can not be null!")
+                     )
+            );
+        }
+        
+        // ... collect param(s) ...
+        text*   tmp_base_url = PG_GETARG_TEXT_P(0);
+        text*   tmp_jwt      = PG_GETARG_TEXT_P(1);
+        
+#ifdef PG_CPP_UTILS_LOG_DEBUG
+        const std::string __tmp_base_url  = PG_CPP_UTILS_TEXT2STRING(tmp_base_url);
+        const std::string __tmp_jwt = PG_CPP_UTILS_TEXT2STRING(tmp_jwt);
+        PG_CPP_UTILS_LOG_DEBUG("%s,%s", __tmp_base_url.c_str(), __tmp_jwt.c_str());
+#endif
+
+        if ( nullptr == tmp_base_url ) {
+            ereport(ERROR,
+                    (
+                     errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("pg_cpp_utils_make_slashy_jwt_link(...) - b) base URL argument can not be null!")
+                    )
+            );
+        }
+
+        if ( nullptr == tmp_jwt ) {
+            ereport(ERROR,
+                    (
+                     errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("pg_cpp_utils_make_slashy_jwt_link(...) - b) JWT uri argument can not be null!")
+                    )
+            );
+        }    
+
+        const std::string base_url = std::string(VARDATA(tmp_base_url), VARSIZE(tmp_base_url) - VARHDRSZ);
+        const std::string jwt      = std::string(VARDATA(tmp_jwt), VARSIZE(tmp_jwt) - VARHDRSZ);
+
+        // ... perform request ...
+        return pg_cpp_utils_utils_common(fcinfo,
+                                         /* allocation */
+                                         [] () -> pg::cpp::utils::Utility* {
+                                             return new pg::cpp::utils::JWT();
+                                         },
+                                         /* execute */
+                                         [&jwt, &base_url] (pg::cpp::utils::Utility* a_utility) -> void {
+                                             // ... perform ...
+                                             static_cast<pg::cpp::utils::JWT*>(a_utility)->Slashy(base_url, jwt);
                                          },
                                          /* dealloc */
                                          [] (pg::cpp::utils::Utility* a_utility) -> pg::cpp::utils::Utility* {

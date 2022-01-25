@@ -28,11 +28,9 @@
 
 /**
  * @brief Default constructor.
- *
- * @param a_pkey_uri
  */
-pg::cpp::utils::JWT::JWT (const std::string& a_pkey_uri)
-    : pkey_uri_(a_pkey_uri), jwt_("pg-cpp-utils")
+pg::cpp::utils::JWT::JWT ()
+    : jwt_("pg-cpp-utils")
 {
     /* empty */
 }
@@ -58,14 +56,15 @@ void pg::cpp::utils::JWT::FillOutputAtUserFuncContext (FuncCallContext* a_contex
 }
 
 /**
- * @brief Calculate a payload hash.
+ * @brief Create a JWT.
  *
  * @param a_duration
  * @param a_payload
+ * @param a_pkey_uri
  *
  * @throw
  */
-void pg::cpp::utils::JWT::Encode (const uint64_t& a_duration, const std::string& a_payload)
+void pg::cpp::utils::JWT::Encode (const uint64_t& a_duration, const std::string& a_payload, const std::string& a_pkey_uri)
 {    
     const cc::easy::JSON<::cc::Exception> json;
     try {
@@ -76,7 +75,63 @@ void pg::cpp::utils::JWT::Encode (const uint64_t& a_duration, const std::string&
         for ( auto member : payload.getMemberNames() ) {
             jwt_.SetUnregisteredClaim(member, payload[member]);
         }
-        payload_ = jwt_.Encode(a_duration, pkey_uri_);
+        payload_ = jwt_.Encode(a_duration, a_pkey_uri);
+    } catch (...) {
+        try {
+            ::cc::Exception::Rethrow(/* a_unhandled */ false, __FILE__, __LINE__, __FUNCTION__);
+        } catch (const ::cc::Exception& a_cc_exception) {
+            throw PG_CPP_UTILS_EXCEPTION("%s", a_cc_exception.what());
+        }
+    }
+}
+
+/**
+ * @brief Create a 'slashy' JWT link.
+ *
+ * @param a_base_url
+ * @param a_jwt
+ *
+ * @throw
+ */
+void pg::cpp::utils::JWT::Slashy (const std::string& a_base_url, const std::string& a_jwt)
+{    
+    try {
+        // ... split ...
+        const char* header_ptr = a_jwt.c_str();
+        if ( '\0' == header_ptr[0] ) {
+            throw ::cc::Exception("%s", "Invalid JWT format - empty header!");
+        }
+        const char* payload_ptr = strchr(header_ptr, '.');
+        if ( nullptr == payload_ptr ) {
+            throw ::cc::Exception("%s", "Invalid JWT format - missing or invalid payload!");
+        }
+        payload_ptr += sizeof(char);
+        const char* signature_ptr = strchr(payload_ptr, '.');
+        if ( nullptr == signature_ptr ) {
+            throw ::cc::Exception("%s", "Invalid JWT format - missing or invalid signature!");
+        }
+        signature_ptr += sizeof(char);
+        ssize_t remaining = static_cast<ssize_t>(a_jwt.length());
+        if ( remaining < 40 ) {
+            throw ::cc::Exception("%s", "Invalid JWT format - invalid length!");
+        }
+        // ... set result
+        const char* ptr = a_jwt.c_str();
+        payload_ = a_base_url;
+        if ( '/' != payload_[payload_.length() - 1] ) {
+            payload_ += '/';
+        } 
+        payload_ += std::string(ptr, 40);
+        remaining += 40;
+        ptr       += 40;
+        while ( remaining >= 100 ) {
+            payload_ += '/' + std::string(ptr, 100) ;
+            ptr += 100;
+            remaining -= 100;
+        }
+        if ( remaining > 0 ) {
+            payload_ += '/' +  std::string(ptr, remaining);
+        }        
     } catch (...) {
         try {
             ::cc::Exception::Rethrow(/* a_unhandled */ false, __FILE__, __LINE__, __FUNCTION__);
