@@ -81,7 +81,7 @@ namespace pg
                     virtual ~Record ()
                     {
                         if ( nullptr != p_string_values_ ) {
-                            for ( auto idx = 0 ; idx < n_strings_ ; ++idx ) {
+                            for ( size_t idx = 0 ; idx < n_strings_ ; ++idx ) {
                                 if ( nullptr != p_string_values_[idx] ) {
                                     pfree(p_string_values_[idx]);
                                 }
