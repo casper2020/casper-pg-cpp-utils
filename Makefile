@@ -282,8 +282,8 @@ clean_all:
 
 # dependencies
 deps:
-	@make -C $(OSAL_DIR) -f static-lib-makefile.mk ICU_STAND_ALONE_DEP_ON=true TARGET=$(TARGET) clean all
-	@make -C $(CONNECTORS_DIR) -f static-lib-makefile.mk ICU_STAND_ALONE_DEP_ON=true TARGET=$(TARGET) clean all
+	@make -C $(PACKAGER_DIR)/casper-osal -f static-lib-makefile.mk ICU_STAND_ALONE_DEP_ON=true TARGET=$(TARGET) clean all
+	@make -C $(PACKAGER_DIR)/casper-connectors -f static-lib-makefile.mk ICU_STAND_ALONE_DEP_ON=true TARGET=$(TARGET) clean all
 	@make -C $(JSONCPP_DIR) -f static-lib-makefile.mk TARGET=$(TARGET) clean all
 
 # so
