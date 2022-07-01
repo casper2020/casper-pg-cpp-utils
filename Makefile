@@ -25,6 +25,9 @@ include Settings.mk
 
 PLATFORM    := $(shell uname -s)
 PLATFORM_LC := $(shell echo $(PLATFORM) | tr A-Z a-z)
+MACHINE_ARCH := $(shell uname -m)
+PRJ_ARCH ?= $(MACHINE_ARCH)
+MULTI_ARCH_BUILD_MACHINE ?= false
 
 ####################
 # Set target type
@@ -82,10 +85,13 @@ INSTALL_DIR:=/usr/local/casper
 
 # ICU
 ICU_FULL_VERSION?=$(shell cat  $(PACKAGER_DIR)/icu/version)
-ifeq (Darwin, $(PLATFORM))
-  ICU_INSTALL_DIR?=$(INSTALL_DIR)/icu/$(ICU_FULL_VERSION)/$(TARGET)
-else
-  ICU_INSTALL_DIR?=$(INSTALL_DIR)/icu/$(ICU_FULL_VERSION)
+ifndef ICU_INSTALL_DIR
+  ICU_INSTALL_DIR:=$(INSTALL_DIR)/icu/$(ICU_FULL_VERSION)
+  ifeq (Darwin, $(PLATFORM))
+    ifeq (true, $(MULTI_ARCH_BUILD_MACHINE))
+       ICU_INSTALL_DIR:=$(INSTALL_DIR)/icu/$(PRJ_ARCH)/$(TARGET)/$(ICU_FULL_VERSION)
+    endif
+  endif
 endif
 ICU_INCLUDE_DIR?=$(shell $(READLINK_CMD) -m $(ICU_INSTALL_DIR)/include)
 ICU_LIB_DIR?=$(shell $(READLINK_CMD) -m $(ICU_INSTALL_DIR)/lib)
@@ -95,10 +101,14 @@ ICU_LIBS_FN=libicuuc.$(ICU_VERSION).dylib libicui18n.$(ICU_VERSION).dylib libicu
 # OPENSSL
 OPENSSL_FULL_VERSION?=$(shell cat  $(PACKAGER_DIR)/openssl/version)
 OPENSSL_VERSION?=$(shell cat $(PACKAGER_DIR)/openssl/version | tr -dc '0-9.' | cut -d'.' -f1-2)
-ifeq (Darwin, $(PLATFORM))
-  OPENSSL_INSTALL_DIR?=$(INSTALL_DIR)/openssl/$(OPENSSL_FULL_VERSION)/$(TARGET)
-else
-  OPENSSL_INSTALL_DIR?=$(INSTALL_DIR)/openssl/$(OPENSSL_FULL_VERSION)
+
+ifndef OPENSSL_INSTALL_DIR
+  OPENSSL_INSTALL_DIR:=$(INSTALL_DIR)/openssl/$(OPENSSL_FULL_VERSION)
+  ifeq (Darwin, $(PLATFORM))
+    ifeq (true, $(MULTI_ARCH_BUILD_MACHINE))
+       OPENSSL_INSTALL_DIR:=$(INSTALL_DIR)/openssl/$(PRJ_ARCH)/$(TARGET)/$(OPENSSL_FULL_VERSION)
+    endif
+  endif
 endif
 OPENSSL_INCLUDE_DIR?=$(shell $(READLINK_CMD) -m $(OPENSSL_INSTALL_DIR)/include)
 OPENSSL_LIB_DIR?=$(shell $(READLINK_CMD) -m $(OPENSSL_INSTALL_DIR)/lib)
@@ -282,9 +292,9 @@ clean_all:
 
 # dependencies
 deps:
-	@make -C $(PACKAGER_DIR)/casper-osal -f static-lib-makefile.mk ICU_STAND_ALONE_DEP_ON=true TARGET=$(TARGET) clean all
-	@make -C $(PACKAGER_DIR)/casper-connectors -f static-lib-makefile.mk ICU_STAND_ALONE_DEP_ON=true TARGET=$(TARGET) clean all
-	@make -C $(JSONCPP_DIR) -f static-lib-makefile.mk TARGET=$(TARGET) clean all
+	@make -C $(PACKAGER_DIR)/casper-osal -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) ICU_STAND_ALONE_DEP_ON=true TARGET=$(TARGET) clean all
+	@make -C $(PACKAGER_DIR)/casper-connectors -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) ICU_STAND_ALONE_DEP_ON=true TARGET=$(TARGET) clean all
+	@make -C $(JSONCPP_DIR) -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) TARGET=$(TARGET) clean all
 
 # so
 so: deps
