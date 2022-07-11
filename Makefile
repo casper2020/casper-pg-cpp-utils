@@ -86,11 +86,13 @@ INSTALL_DIR:=/usr/local/casper
 # ICU
 ICU_FULL_VERSION?=$(shell cat  $(PACKAGER_DIR)/icu/version)
 ifndef ICU_INSTALL_DIR
-  ICU_INSTALL_DIR:=$(INSTALL_DIR)/icu/$(ICU_FULL_VERSION)
   ifeq (Darwin, $(PLATFORM))
+    ICU_INSTALL_DIR:=$(INSTALL_DIR)/icu/$(ICU_FULL_VERSION)/$(TARGET)
     ifeq (true, $(MULTI_ARCH_BUILD_MACHINE))
        ICU_INSTALL_DIR:=$(INSTALL_DIR)/icu/$(PRJ_ARCH)/$(TARGET)/$(ICU_FULL_VERSION)
     endif
+  else
+      ICU_INSTALL_DIR:=$(INSTALL_DIR)/icu/$(ICU_FULL_VERSION)
   endif
 endif
 ICU_INCLUDE_DIR?=$(shell $(READLINK_CMD) -m $(ICU_INSTALL_DIR)/include)
@@ -103,11 +105,13 @@ OPENSSL_FULL_VERSION?=$(shell cat  $(PACKAGER_DIR)/openssl/version)
 OPENSSL_VERSION?=$(shell cat $(PACKAGER_DIR)/openssl/version | tr -dc '0-9.' | cut -d'.' -f1-2)
 
 ifndef OPENSSL_INSTALL_DIR
-  OPENSSL_INSTALL_DIR:=$(INSTALL_DIR)/openssl/$(OPENSSL_FULL_VERSION)
   ifeq (Darwin, $(PLATFORM))
+    OPENSSL_INSTALL_DIR:=$(INSTALL_DIR)/openssl/$(OPENSSL_FULL_VERSION)/$(TARGET)
     ifeq (true, $(MULTI_ARCH_BUILD_MACHINE))
        OPENSSL_INSTALL_DIR:=$(INSTALL_DIR)/openssl/$(PRJ_ARCH)/$(TARGET)/$(OPENSSL_FULL_VERSION)
     endif
+  else
+    OPENSSL_INSTALL_DIR:=$(INSTALL_DIR)/openssl/$(OPENSSL_FULL_VERSION)
   endif
 endif
 OPENSSL_INCLUDE_DIR?=$(shell $(READLINK_CMD) -m $(OPENSSL_INSTALL_DIR)/include)
