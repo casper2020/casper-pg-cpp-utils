@@ -125,6 +125,7 @@ OPENSSL_LIBS_FN=libcrypto.$(OPENSSL_VERSION).dylib libssl.$(OPENSSL_VERSION).dyl
 SRC := src/pg-cpp-utils.cc                \
 	src/pg/cpp/utils/version.cc           \
 	src/pg/cpp/utils/info.cc              \
+	src/pg/cpp/utils/locales.cc           \
 	src/pg/cpp/utils/utility.cc           \
 	src/pg/cpp/utils/b64.cc               \
 	src/pg/cpp/utils/jwt.cc               \

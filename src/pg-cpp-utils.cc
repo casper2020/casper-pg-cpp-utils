@@ -32,6 +32,7 @@ extern "C" {
 
 #include "pg/cpp/utils/version.h"
 #include "pg/cpp/utils/info.h"
+#include "pg/cpp/utils/locales.h"
 #include "pg/cpp/utils/exception.h"
 #include "pg/cpp/utils/jwt.h"
 #include "pg/cpp/utils/invoice_hash.h"
@@ -54,6 +55,7 @@ extern "C" {
     Datum pg_cpp_utils_number_spellout(PG_FUNCTION_ARGS);
     Datum pg_cpp_utils_version(PG_FUNCTION_ARGS);
     Datum pg_cpp_utils_info(PG_FUNCTION_ARGS);
+    Datum pg_cpp_utils_locales(PG_FUNCTION_ARGS);
     PG_FUNCTION_INFO_V1(pg_cpp_utils_make_jwt);
     PG_FUNCTION_INFO_V1(pg_cpp_utils_make_slashy_jwt_link);
     PG_FUNCTION_INFO_V1(pg_cpp_utils_invoice_hash);
@@ -64,6 +66,7 @@ extern "C" {
     PG_FUNCTION_INFO_V1(pg_cpp_utils_format_message);
     PG_FUNCTION_INFO_V1(pg_cpp_utils_version);
     PG_FUNCTION_INFO_V1(pg_cpp_utils_info);
+    PG_FUNCTION_INFO_V1(pg_cpp_utils_locales);
 } // extern "C"
 
 // Initialize ICU.
@@ -937,6 +940,30 @@ extern "C" {
                                          /* allocation */
                                          [] () -> pg::cpp::utils::Utility* {
                                              return new pg::cpp::utils::Info();
+                                         },
+                                         /* execute */
+                                         [] (pg::cpp::utils::Utility* a_utility) -> void {
+                                             // ... nothing to do ...
+                                         },
+                                         /* dealloc */
+                                         [] (pg::cpp::utils::Utility* a_utility) -> pg::cpp::utils::Utility* {
+                                             delete a_utility;
+                                             return nullptr;
+                                         }
+        );
+
+    }
+
+    /**
+     * @brief pg-cpp-utils locales output.
+     */
+    Datum pg_cpp_utils_locales (PG_FUNCTION_ARGS)
+    {
+        // ... perform request ...
+        return pg_cpp_utils_utils_common(fcinfo,
+                                         /* allocation */
+                                         [] () -> pg::cpp::utils::Utility* {
+                                             return new pg::cpp::utils::Locales();
                                          },
                                          /* execute */
                                          [] (pg::cpp::utils::Utility* a_utility) -> void {
