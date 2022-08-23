@@ -57,11 +57,9 @@ void pg::cpp::utils::Locales::FillOutputAtUserFuncContext (FuncCallContext* a_co
     Json::Value      array = Json::Value(Json::ValueType::arrayValue);
     Json::FastWriter fw; fw.omitEndingLineFeed();
 
-    ereport(DEBUG2, (errmsg_internal("pg_cpp_utils LOCALES # %d", count)));
     for ( int32_t idx = 0 ; idx < count ; ++idx ) {
         const auto locale = locales[idx];
         array.append(Json::Value(locale.getName()));
-        ereport(DEBUG2, (errmsg_internal("pg_cpp_utils [%3d/%3d] LOCALE: %s", idx, count, locale.getName())));
     }
 
     Utility::Records* records = static_cast<Utility::Records*>(a_context->user_fctx);
