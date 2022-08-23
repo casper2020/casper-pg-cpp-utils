@@ -296,29 +296,29 @@ clean_all:
 	@find . -name "$(LIB_NAME).dylib*" -delete
 
 # dependencies
-deps:
-	@make -C $(PACKAGER_DIR)/casper-osal -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) ICU_STAND_ALONE_DEP_ON=true TARGET=$(TARGET) clean all
-	@make -C $(PACKAGER_DIR)/casper-connectors -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) ICU_STAND_ALONE_DEP_ON=true TARGET=$(TARGET) clean all
-	@make -C $(JSONCPP_DIR) -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) TARGET=$(TARGET) clean all
+deps-debug:
+	@make -C $(PACKAGER_DIR)/casper-osal -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) ICU_STAND_ALONE_DEP_ON=true TARGET=debug clean all
+	@make -C $(PACKAGER_DIR)/casper-connectors -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) ICU_STAND_ALONE_DEP_ON=true TARGET=debug clean all
+	@make -C $(JSONCPP_DIR) -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) TARGET=debug clean all
 
-# so
-so: deps
-	@echo "* $(PLATFORM) $(TARGET) rebuild..."
-	@make -f Makefile clean clean_all all
+deps-release:
+	@make -C $(PACKAGER_DIR)/casper-osal -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) ICU_STAND_ALONE_DEP_ON=true TARGET=release clean all
+	@make -C $(PACKAGER_DIR)/casper-connectors -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) ICU_STAND_ALONE_DEP_ON=true TARGET=release clean all
+	@make -C $(JSONCPP_DIR) -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) TARGET=release clean all
 
 # release
-release: deps
+release: deps-release
 	@echo "* $(PLATFORM) $(TARGET) rebuild..."
-	@make -f Makefile TARGET=release so
+	@make -f Makefile TARGET=release clean clean_all all
 
 # debug
-debug: deps
+debug: deps-debug
 	@echo "* $(PLATFORM) $(TARGET) rebuild..."
-	@make -f Makefile TARGET=debug so
+	@make -f Makefile TARGET=debug clean clean_all all
 
 # development
 dev:
-	@make -f Makefile TARGET=$(TARGET) so rpath install	
+	@make -f Makefile TARGET=$(TARGET) clean clean_all all rpath install
 
 # rpath
 rpath:
