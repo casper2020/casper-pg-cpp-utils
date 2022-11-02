@@ -29,7 +29,7 @@
 
 #include "unicode/unistr.h"
 #include "unicode/utypes.h"
-#include <unicode/locid.h> // ICU Locale
+#include "unicode/locid.h" // ICU Locale
 
 namespace pg
 {

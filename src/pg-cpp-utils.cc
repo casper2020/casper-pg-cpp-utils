@@ -41,21 +41,14 @@ extern "C" {
 #include "pg/cpp/utils/number_formatter.h"
 #include "pg/cpp/utils/message_formatter.h"
 
-#include <unicode/utypes.h> // u_init
-#include <unicode/uclean.h> // u_cleanup
+#include "unicode/utypes.h" // u_init
+#include "unicode/uclean.h" // u_cleanup
 
-#include <openssl/ssl.h>
-#include <openssl/err.h>
+#include "openssl/ssl.h"
+#include "openssl/err.h"
 
 extern "C" {
     PG_MODULE_MAGIC;    
-    Datum pg_cpp_utils_make_jwt(PG_FUNCTION_ARGS);
-    Datum pg_cpp_utils_make_slashy_jwt_link(PG_FUNCTION_ARGS);
-    Datum pg_cpp_utils_invoice_hash(PG_FUNCTION_ARGS);
-    Datum pg_cpp_utils_number_spellout(PG_FUNCTION_ARGS);
-    Datum pg_cpp_utils_version(PG_FUNCTION_ARGS);
-    Datum pg_cpp_utils_info(PG_FUNCTION_ARGS);
-    Datum pg_cpp_utils_locales(PG_FUNCTION_ARGS);
     PG_FUNCTION_INFO_V1(pg_cpp_utils_make_jwt);
     PG_FUNCTION_INFO_V1(pg_cpp_utils_make_slashy_jwt_link);
     PG_FUNCTION_INFO_V1(pg_cpp_utils_invoice_hash);

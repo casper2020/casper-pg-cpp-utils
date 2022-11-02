@@ -26,8 +26,8 @@
 #include "pg/cpp/utils/utility.h"
 
 #include <string>          // std::string
-#include <unicode/locid.h> // ICU Locale
-#include <unicode/rbnf.h>  // ICU RuleBasedNumberFormat
+#include "unicode/locid.h" // ICU Locale
+#include "unicode/rbnf.h"  // ICU RuleBasedNumberFormat
 namespace pg
 {
 
