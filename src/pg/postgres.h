@@ -21,10 +21,11 @@
 
 #pragma once
 
-#ifdef __clang__
-  #pragma clang diagnostic push
-  #pragma clang diagnostic ignored "-Wdeprecated-register"
-#endif
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-register"
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
+#pragma clang diagnostic ignored "-Wsign-conversion"
+#pragma clang diagnostic ignored "-Wunused-parameter"
 extern "C" {
     #include "server/postgres.h"
     #include "catalog/pg_type.h"
@@ -34,6 +35,4 @@ extern "C" {
     #include <utils/jsonb.h>
     #include <funcapi.h>
 }
-#ifdef __clang__
-  #pragma clang diagnostic pop
-#endif
+#pragma clang diagnostic pop

@@ -148,7 +148,7 @@ void pg::cpp::utils::InvoiceHash::Calculate (const std::string& a_payload)
             throw PG_CPP_UTILS_EXCEPTION_NA("Error while updating signing context");
         }
 
-        signature_bytes = new unsigned char[EVP_PKEY_size(pkey)];
+        signature_bytes = new unsigned char[static_cast<size_t>(EVP_PKEY_size(pkey))];
         if ( !EVP_SignFinal(ctx, signature_bytes, &signature_len, pkey) ) {
             throw PG_CPP_UTILS_EXCEPTION_NA("Error while finalizing signing context!");
         }

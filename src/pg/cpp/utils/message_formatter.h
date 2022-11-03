@@ -27,9 +27,14 @@
 
 #include <string> // std::string
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wsign-conversion"
+
 #include "unicode/unistr.h"
 #include "unicode/utypes.h"
 #include "unicode/locid.h" // ICU Locale
+
+#pragma clang diagnostic pop
 
 namespace pg
 {

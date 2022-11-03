@@ -251,12 +251,12 @@ extern "C" {
     Datum pg_cpp_utils_make_jwt (PG_FUNCTION_ARGS)
     {
         // ... test the number of arguments ...
-        const size_t args_count = PG_NARGS();
+        const short args_count = PG_NARGS();
         if ( 3 != args_count ) {
             ereport(ERROR,
                     (
                      errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                     errmsg("pg_cpp_utils_make_jwt(...) - received %zd argument(s), expected at least %d argument(s)!", args_count, 3)
+                     errmsg("pg_cpp_utils_make_jwt(...) - received %hd argument(s), expected at least %d argument(s)!", args_count, 3)
                     )
             );
         }
@@ -346,12 +346,12 @@ extern "C" {
     Datum pg_cpp_utils_make_slashy_jwt_link (PG_FUNCTION_ARGS)
     {
         // ... test the number of arguments ...
-        const size_t args_count = PG_NARGS();
+        const short args_count = PG_NARGS();
         if ( 2 != args_count ) {
             ereport(ERROR,
                     (
                      errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                     errmsg("pg_cpp_utils_make_slashy_jwt_link(...) - received %zd argument(s), expected at least %d argument(s)!", args_count, 2)
+                     errmsg("pg_cpp_utils_make_slashy_jwt_link(...) - received %hd argument(s), expected at least %d argument(s)!", args_count, 2)
                     )
             );
         }
@@ -432,12 +432,12 @@ extern "C" {
     Datum pg_cpp_utils_invoice_hash (PG_FUNCTION_ARGS)
     {
         // ... test the number of arguments ...
-        const size_t args_count = PG_NARGS();
+        const short args_count = PG_NARGS();
         if ( 2 != args_count ) {
             ereport(ERROR,
                     (
                      errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                     errmsg("pg_cpp_utils_invoice_hash(...) - received %zd argument(s), expected at least %d argument(s)!", args_count, 2)
+                     errmsg("pg_cpp_utils_invoice_hash(...) - received %hd argument(s), expected at least %d argument(s)!", args_count, 2)
                     )
             );
         }
@@ -492,12 +492,12 @@ extern "C" {
     Datum pg_cpp_utils_public_link (PG_FUNCTION_ARGS)
     {
         // ... test the number of arguments ...
-        const size_t args_count = PG_NARGS();
+        const short args_count = PG_NARGS();
         if ( 6 != args_count ) {
             ereport(ERROR,
                     (
                      errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                     errmsg("pg_cpp_utils_public_link(...) - received %zd argument(s), expected at least %d argument(s)!", args_count, 6)
+                     errmsg("pg_cpp_utils_public_link(...) - received %hd argument(s), expected at least %d argument(s)!", args_count, 6)
                     )
             );
         }
@@ -597,12 +597,12 @@ extern "C" {
     Datum pg_cpp_utils_number_spellout (PG_FUNCTION_ARGS)
     {
         // ... test the number of arguments ...
-        const size_t args_count = PG_NARGS();
+        const short args_count = PG_NARGS();
         if ( args_count < 2 ) {
             ereport(ERROR,
                     (
                      errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                     errmsg("pg_cpp_utils_number_spellout(...) - received %zd argument(s), expected at least %d argument(s)!", args_count, 2)
+                     errmsg("pg_cpp_utils_number_spellout(...) - received %hd argument(s), expected at least %d argument(s)!", args_count, 2)
                     )
             );
         }
@@ -650,12 +650,12 @@ extern "C" {
     Datum pg_cpp_utils_currency_spellout (PG_FUNCTION_ARGS)
     {
         // ... test the number of arguments ...
-        const size_t args_count = PG_NARGS();
+        const short args_count = PG_NARGS();
         if ( args_count < 8 ) {
             ereport(ERROR,
                     (
                      errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                     errmsg("pg_cpp_utils_currency_spellout(...) - received %zd argument(s), expected at least %d argument(s)!", args_count, 8)
+                     errmsg("pg_cpp_utils_currency_spellout(...) - received %hd argument(s), expected at least %d argument(s)!", args_count, 8)
                     )
             );
         }
@@ -719,12 +719,12 @@ extern "C" {
     Datum pg_cpp_utils_format_number (PG_FUNCTION_ARGS)
     {
         // ... test the number of arguments ...
-        const size_t args_count = PG_NARGS();
+        const short args_count = PG_NARGS();
         if ( args_count < 3 ) {
             ereport(ERROR,
                     (
                      errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                     errmsg("pg_cpp_utils_format_number(...) - received %zd argument(s), expected at least %d argument(s)!", args_count, 3)
+                     errmsg("pg_cpp_utils_format_number(...) - received %hd argument(s), expected at least %d argument(s)!", args_count, 3)
                      )
             );
         }
@@ -793,12 +793,12 @@ extern "C" {
     Datum pg_cpp_utils_format_message (PG_FUNCTION_ARGS)
     {
         // ... test the number of arguments ...
-        const size_t args_count = PG_NARGS();
+        const short args_count = PG_NARGS();
         if ( args_count < 3 ) {
             ereport(ERROR,
                     (
                      errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                     errmsg("pg_cpp_utils_format_message(...) - received %zd argument(s), expected at least %d argument(s)!", args_count, 3)
+                     errmsg("pg_cpp_utils_format_message(...) - received %hd argument(s), expected at least %d argument(s)!", args_count, 3)
                     )
             );
         }
@@ -911,7 +911,7 @@ extern "C" {
                                              return new pg::cpp::utils::Version();
                                          },
                                          /* execute */
-                                         [] (pg::cpp::utils::Utility* a_utility) -> void {
+                                         [] (pg::cpp::utils::Utility* /* a_utility */) -> void {
                                              // ... nothing to do ...
                                          },
                                          /* dealloc */
@@ -935,7 +935,7 @@ extern "C" {
                                              return new pg::cpp::utils::Info();
                                          },
                                          /* execute */
-                                         [] (pg::cpp::utils::Utility* a_utility) -> void {
+                                         [] (pg::cpp::utils::Utility* /* a_utility */) -> void {
                                              // ... nothing to do ...
                                          },
                                          /* dealloc */
@@ -959,7 +959,7 @@ extern "C" {
                                              return new pg::cpp::utils::Locales();
                                          },
                                          /* execute */
-                                         [] (pg::cpp::utils::Utility* a_utility) -> void {
+                                         [] (pg::cpp::utils::Utility* /* a_utility */) -> void {
                                              // ... nothing to do ...
                                          },
                                          /* dealloc */

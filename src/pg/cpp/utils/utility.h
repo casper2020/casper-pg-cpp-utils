@@ -137,7 +137,7 @@ namespace pg
                      * @param a_index Record position within the internal array.
                      * @param a_values
                      */
-                    inline void Release (const size_t a_index, char** a_values)
+                    inline void Release (const size_t a_index, char** /* a_values */)
                     {
                         if ( nullptr != items_[a_index] ) {
                             delete items_[a_index];

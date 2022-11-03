@@ -130,7 +130,7 @@ void pg::cpp::utils::JWT::Slashy (const std::string& a_base_url, const std::stri
             remaining -= 100;
         }
         if ( remaining > 0 ) {
-            payload_ += '/' +  std::string(ptr, remaining);
+            payload_ += '/' +  std::string(ptr, static_cast<size_t>(remaining));
         }        
     } catch (...) {
         try {

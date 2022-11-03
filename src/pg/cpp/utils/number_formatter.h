@@ -26,7 +26,13 @@
 #include "pg/cpp/utils/message_formatter.h"
 
 #include <string>             // std::string
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wsign-conversion"
+
 #include "unicode/decimfmt.h" // U_ICU_NAMESPACE::DecimalFormat
+
+#pragma clang diagnostic pop
 
 namespace pg
 {

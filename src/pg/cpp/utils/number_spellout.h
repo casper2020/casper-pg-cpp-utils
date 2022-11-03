@@ -26,8 +26,15 @@
 #include "pg/cpp/utils/utility.h"
 
 #include <string>          // std::string
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wsign-conversion"
+
 #include "unicode/locid.h" // ICU Locale
 #include "unicode/rbnf.h"  // ICU RuleBasedNumberFormat
+
+#pragma clang diagnostic pop
+
 namespace pg
 {
 

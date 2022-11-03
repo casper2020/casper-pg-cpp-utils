@@ -26,8 +26,12 @@
 
 #include "osal/osal_time.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wsign-conversion"
+#pragma clang diagnostic ignored "-Wunused-parameter"
 #include "cppcodec/base64_url_unpadded.hpp"
 #include "cppcodec/base64_rfc4648.hpp"
+#pragma clang diagnostic pop
 
 #include <openssl/pem.h>
 #include <openssl/sha.h>
@@ -174,7 +178,7 @@ void pg::cpp::utils::PublicLink::Calculate (const std::string& a_base_url,
         const unsigned char* in      = reinterpret_cast<const unsigned char*>(payload.c_str());
         int                  inl     = static_cast<int>(payload.length());
 
-        out  = new unsigned char[ (inl + EVP_CIPHER_block_size(cipher) - 1) ];
+        out  = new unsigned char[ static_cast<size_t>(inl + EVP_CIPHER_block_size(cipher) - 1) ];
         outl = 0;
 
         //

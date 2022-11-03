@@ -88,7 +88,7 @@ void pg::cpp::utils::MessageFormatter::Format (const std::string& a_format, cons
     }
 
     U_ICU_NAMESPACE::MessageFormat::format(a_format.c_str(),
-        args, a_args.size(),
+        args, static_cast<int32_t>(a_args.size()),
         unicode_string, icu_error_code_
     );
 
