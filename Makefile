@@ -259,7 +259,7 @@ PGXS        := $(shell $(PG_CONFIG) --pgxs)
 
 include $(PGXS)
 
-override LDFLAGS := -headerpad_max_install_names
+override LDFLAGS := -Wl,-headerpad_max_install_names
 override LIBS:=$(LIBS:-lcrypto=)
 override LIBS:=$(LIBS:-lssl=)
 
@@ -297,18 +297,18 @@ clean_all:
 
 common-deps:
 	@$(eval OSAL_DEPS=ICU_STAND_ALONE_DEP_ON=true)
-	@$(eval CONNECTORS_DEPS=JSONCPP_DEP_ON=true CASPER_OSAL_ICU_DEP_ON=true ICU_STAND_ALONE_DEP_ON=true CPPCODEC_DEP_ON=true)
+	@$(eval CONNECTORS_DEPS=JSONCPP_DEP_ON=true CASPER_OSAL_ICU_DEP_ON=true ICU_STAND_ALONE_DEP_ON=true CPPCODEC_DEP_ON=true ZLIB_DEP_ON=true)
 
 # dependencies
 deps-debug: common-deps
-	@make -C $(PACKAGER_DIR)/casper-osal -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) TARGET=debug $(OSAL_DEPS) clean lib
-	make -C $(PACKAGER_DIR)/casper-connectors -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) TARGET=debug $(CONNECTORS_DEPS) clean lib
-	@make -C $(JSONCPP_DIR) -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) TARGET=debug clean lib
+	@make -C $(PACKAGER_DIR)/casper-osal -f static-lib-makefile.mk PROJECT_ORIGIN=$(LIB_NAME) PRJ_ARCH=$(PRJ_ARCH) TARGET=debug $(OSAL_DEPS) clean lib
+	make -C $(PACKAGER_DIR)/casper-connectors -f static-lib-makefile.mk PROJECT_ORIGIN=$(LIB_NAME) PRJ_ARCH=$(PRJ_ARCH) TARGET=debug $(CONNECTORS_DEPS) clean lib
+	@make -C $(JSONCPP_DIR) -f static-lib-makefile.mk PROJECT_ORIGIN=$(LIB_NAME) PRJ_ARCH=$(PRJ_ARCH) TARGET=debug clean lib
 
 deps-release: common-deps
-	@make -C $(PACKAGER_DIR)/casper-osal -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) TARGET=release $(OSAL_DEPS) clean lib
-	@make -C $(PACKAGER_DIR)/casper-connectors -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) TARGET=release $(CONNECTORS_DEPS) clean lib
-	@make -C $(JSONCPP_DIR) -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) TARGET=release clean lib
+	@make -C $(PACKAGER_DIR)/casper-osal -f static-lib-makefile.mk PROJECT_ORIGIN=$(LIB_NAME) PRJ_ARCH=$(PRJ_ARCH) TARGET=release $(OSAL_DEPS) clean lib
+	@make -C $(PACKAGER_DIR)/casper-connectors -f static-lib-makefile.mk PROJECT_ORIGIN=$(LIB_NAME) PRJ_ARCH=$(PRJ_ARCH) TARGET=release $(CONNECTORS_DEPS) clean lib
+	@make -C $(JSONCPP_DIR) -f static-lib-makefile.mk PROJECT_ORIGIN=$(LIB_NAME) PRJ_ARCH=$(PRJ_ARCH) TARGET=release clean lib
 
 # release
 release: deps-release
