@@ -141,20 +141,20 @@ SRC := src/pg-cpp-utils.cc                \
 
 OSAL_DIR          := $(shell $(READLINK_CMD) -m ../casper-osal)
 OSAL_SRC_DIR      := $(OSAL_DIR)/src
-OSAL_LIB_DIR      ?= $(OSAL_DIR)/out/$(PLATFORM_LC)/$(TARGET)
+OSAL_LIB_DIR      ?= $(PACKAGER_DIR)/casper-osal/out/$(PLATFORM_LC)/$(TARGET)
 OSAL_LIB          ?= osal-icu
 OSAL_LINKER_FLAGS := -L $(OSAL_LIB_DIR) -l$(OSAL_LIB)
 
 CONNECTORS_DIR          := $(shell $(READLINK_CMD) -m ../casper-connectors)
 CONNECTORS_SRC_DIR      := $(CONNECTORS_DIR)/src
-CONNECTORS_LIB_DIR      ?= $(CONNECTORS_DIR)/out/$(PLATFORM_LC)/$(TARGET)
+CONNECTORS_LIB_DIR      ?= $(PACKAGER_DIR)/casper-connectors/out/$(PLATFORM_LC)/$(TARGET)
 CONNECTORS_LIB          ?= connectors-icu
 CONNECTORS_LINKER_FLAGS := -L $(CONNECTORS_LIB_DIR) -l$(CONNECTORS_LIB)
 
 # jsoncpp
 JSONCPP_DIR          := $(PACKAGER_DIR)/jsoncpp
 JSONCPP_SRC_DIR      := $(shell $(READLINK_CMD) -m ../jsoncpp/dist )
-JSONCPP_LIB_DIR      ?= $(JSONCPP_DIR)/out/$(PLATFORM_LC)/$(TARGET)
+JSONCPP_LIB_DIR      ?= $(PACKAGER_DIR)/jsoncpp/out/$(PLATFORM_LC)/$(TARGET)
 JSONCPP_LIB          ?= jsoncpp
 JSONCPP_LINKER_FLAGS := -L $(JSONCPP_LIB_DIR) -l$(JSONCPP_LIB)
 
@@ -242,7 +242,7 @@ $(shell sed -i.bak s#"r.r.d"#"$(REL_DATE)"#g src/pg/cpp/utils/versioning.h )
 $(shell sed -i.bak s#"r.r.b"#"$(REL_BRANCH)"#g src/pg/cpp/utils/versioning.h )
 $(shell sed -i.bak s#"r.r.h"#"$(REL_HASH)"#g src/pg/cpp/utils/versioning.h )
 $(shell sed -i.bak s#"v.v.v"#"$(REL_VARIANT)"#g src/pg/cpp/utils/versioning.h )
-$(shell sed -i.bak s#"t.t.t"#"$(TARGET)"#g src/pg/cpp/utils/versioning.h )
+$(shell sed -i.bak s#"r.r.t"#"$(TARGET)"#g src/pg/cpp/utils/versioning.h )
 $(shell rm -f src/pg/cpp/utils/versioning.h.bak)
 
 ################
@@ -295,16 +295,20 @@ clean_all:
 	@find . -name "$(LIB_NAME).so*" -delete
 	@find . -name "$(LIB_NAME).dylib*" -delete
 
-# dependencies
-deps-debug:
-	@make -C $(PACKAGER_DIR)/casper-osal -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) ICU_STAND_ALONE_DEP_ON=true TARGET=debug clean all
-	@make -C $(PACKAGER_DIR)/casper-connectors -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) ICU_STAND_ALONE_DEP_ON=true TARGET=debug clean all
-	@make -C $(JSONCPP_DIR) -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) TARGET=debug clean all
+common-deps:
+	@$(eval OSAL_DEPS=ICU_STAND_ALONE_DEP_ON=true)
+	@$(eval CONNECTORS_DEPS=JSONCPP_DEP_ON=true CASPER_OSAL_ICU_DEP_ON=true ICU_STAND_ALONE_DEP_ON=true CPPCODEC_DEP_ON=true)
 
-deps-release:
-	@make -C $(PACKAGER_DIR)/casper-osal -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) ICU_STAND_ALONE_DEP_ON=true TARGET=release clean all
-	@make -C $(PACKAGER_DIR)/casper-connectors -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) ICU_STAND_ALONE_DEP_ON=true TARGET=release clean all
-	@make -C $(JSONCPP_DIR) -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) TARGET=release clean all
+# dependencies
+deps-debug: common-deps
+	@make -C $(PACKAGER_DIR)/casper-osal -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) TARGET=debug $(OSAL_DEPS) clean lib
+	make -C $(PACKAGER_DIR)/casper-connectors -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) TARGET=debug $(CONNECTORS_DEPS) clean lib
+	@make -C $(JSONCPP_DIR) -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) TARGET=debug clean lib
+
+deps-release: common-deps
+	@make -C $(PACKAGER_DIR)/casper-osal -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) TARGET=release $(OSAL_DEPS) clean lib
+	@make -C $(PACKAGER_DIR)/casper-connectors -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) TARGET=release $(CONNECTORS_DEPS) clean lib
+	@make -C $(JSONCPP_DIR) -f static-lib-makefile.mk PRJ_ARCH=$(PRJ_ARCH) TARGET=release clean lib
 
 # release
 release: deps-release
