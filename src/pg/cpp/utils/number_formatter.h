@@ -27,12 +27,15 @@
 
 #include <string>             // std::string
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wsign-conversion"
+#include "cc/pragmas.h"
+
+CC_DIAGNOSTIC_PUSH()
+
+CC_DIAGNOSTIC_IGNORED("-Wsign-conversion")
 
 #include "unicode/decimfmt.h" // U_ICU_NAMESPACE::DecimalFormat
 
-#pragma clang diagnostic pop
+CC_DIAGNOSTIC_POP()
 
 namespace pg
 {

@@ -21,11 +21,14 @@
 
 #pragma once
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-register"
-#pragma clang diagnostic ignored "-Wshorten-64-to-32"
-#pragma clang diagnostic ignored "-Wsign-conversion"
-#pragma clang diagnostic ignored "-Wunused-parameter"
+#include "cc/pragmas.h"
+
+CC_DIAGNOSTIC_PUSH()
+
+CC_DIAGNOSTIC_IGNORED("-Wdeprecated-register")
+CC_DIAGNOSTIC_IGNORED("-Wshorten-64-to-32")
+CC_DIAGNOSTIC_IGNORED("-Wsign-conversion")
+CC_DIAGNOSTIC_IGNORED("-Wunused-parameter")
 extern "C" {
     #include "server/postgres.h"
     #include "catalog/pg_type.h"
@@ -35,4 +38,4 @@ extern "C" {
     #include <utils/jsonb.h>
     #include <funcapi.h>
 }
-#pragma clang diagnostic pop
+CC_DIAGNOSTIC_POP()

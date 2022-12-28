@@ -26,12 +26,15 @@
 
 #include "osal/osal_time.h"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wsign-conversion"
-#pragma clang diagnostic ignored "-Wunused-parameter"
+#include "cc/pragmas.h"
+
+CC_DIAGNOSTIC_PUSH()
+
+CC_DIAGNOSTIC_IGNORED("-Wsign-conversion")
+CC_DIAGNOSTIC_IGNORED("-Wunused-parameter")
 #include "cppcodec/base64_url_unpadded.hpp"
 #include "cppcodec/base64_rfc4648.hpp"
-#pragma clang diagnostic pop
+CC_DIAGNOSTIC_POP()
 
 #include <openssl/pem.h>
 #include <openssl/sha.h>
