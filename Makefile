@@ -141,20 +141,20 @@ SRC := src/pg-cpp-utils.cc                \
 
 OSAL_DIR          := $(shell $(READLINK_CMD) -m ../casper-osal)
 OSAL_SRC_DIR      := $(OSAL_DIR)/src
-OSAL_LIB_DIR      ?= $(PACKAGER_DIR)/build/$(PLATFORM_LC)/pg-cpp-utils//$(TARGET)/casper-osal
+OSAL_LIB_DIR      ?= $(PACKAGER_DIR)/build/$(PLATFORM_LC)/pg-cpp-utils/$(TARGET)/casper-osal
 OSAL_LIB          ?= osal-icu
 OSAL_LINKER_FLAGS := -L $(OSAL_LIB_DIR) -l$(OSAL_LIB)
 
 CONNECTORS_DIR          := $(shell $(READLINK_CMD) -m ../casper-connectors)
 CONNECTORS_SRC_DIR      := $(CONNECTORS_DIR)/src
-CONNECTORS_LIB_DIR      ?= $(PACKAGER_DIR)/build/$(PLATFORM_LC)/pg-cpp-utils//$(TARGET)/casper-connectors
+CONNECTORS_LIB_DIR      ?= $(PACKAGER_DIR)/build/$(PLATFORM_LC)/pg-cpp-utils/$(TARGET)/casper-connectors
 CONNECTORS_LIB          ?= connectors-icu
 CONNECTORS_LINKER_FLAGS := -L $(CONNECTORS_LIB_DIR) -l$(CONNECTORS_LIB)
 
 # jsoncpp
 JSONCPP_DIR          := $(PACKAGER_DIR)/jsoncpp
 JSONCPP_SRC_DIR      := $(shell $(READLINK_CMD) -m ../jsoncpp/dist )
-JSONCPP_LIB_DIR      ?= $(PACKAGER_DIR)/build/$(PLATFORM_LC)/pg-cpp-utils//$(TARGET)/jsoncpp
+JSONCPP_LIB_DIR      ?= $(PACKAGER_DIR)/build/$(PLATFORM_LC)/pg-cpp-utils/$(TARGET)/jsoncpp
 JSONCPP_LIB          ?= jsoncpp
 JSONCPP_LINKER_FLAGS := -L $(JSONCPP_LIB_DIR) -l$(JSONCPP_LIB)
 
